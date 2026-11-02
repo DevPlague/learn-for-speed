@@ -33,7 +33,7 @@ If the deadline is earlier, cut from the bottom: Stretch, then ablations, then s
 - Likely questions: why RL vs hand controller? why PPO, not evolution? how do you know it generalizes (held-out seeds)? how could the reward be exploited? why do seeds differ?
 
 ## How we work
-- Take a task by adding your initials; keep at most 2 in Doing each. Nobody is assigned.
+- Take a task by adding your initials; keep at most 2 in Doing each. Nobody is assigned. Letters in brackets (S1 Simulation, S2 Learning, S3 Evaluation) only suggest an area.
 - 20-minute weekly sync (tasks, gate, risks); async message when blocked.
 - `main` always runs; short branches; one teammate reviews each PR.
 - One config per experiment; tiny run before long jobs; log every run below.
@@ -44,23 +44,24 @@ If the deadline is earlier, cut from the bottom: Stretch, then ablations, then s
 
 **Backlog**
 - [ ] T01 Everyone runs `make setup`; first person commits `uv.lock`; GitHub repo + protected `main`
-- [ ] T02 Decide code layout; document it in CLAUDE.md (<= 8 lines)
-- [ ] T03 Env: car (bicycle + grip limit), spline tracks with difficulty, rendering, keyboard play
-- [ ] T04 Env: lidar + lookahead observation, reward, termination (off-road, stuck, timeout, lap)
-- [ ] T05 Tests: geometry, physics, `check_env`, reproducibility with seeds
-- [ ] T06 Baselines: random and pure pursuit; pure pursuit must lap tracks (Gate 1)
-- [ ] T07 Training script: SB3 PPO, parallel envs, config file per run, validation tracks, checkpoints, TensorBoard
-- [ ] T08 First MVP run (fixed gentle tracks); watch it; fix env/reward bugs
-- [ ] T09 Curriculum + procedural tracks; check it reaches full difficulty
-- [ ] T10 Evaluation script (test seeds, table, JSON, mean +- std over seeds)
-- [ ] T11 Final runs: 3 seeds of the target config
-- [ ] T12 Ablations (3 seeds each): no lookahead, no curriculum, one of {obs normalization, no smoothness penalty, steer-only}
-- [ ] T13 Learning-curve figure; failure analysis on 3 test tracks
-- [ ] T14 Videos: side by side vs pure pursuit, one failure case, lidar view; trajectory figure
+- [ ] T17 (S1) Rust core crate, binding choice, `make rust` target and Dockerfile step. Profile a NumPy version first
+- [ ] T03 (S1) Env: car (bicycle + grip limit), spline tracks with difficulty, rendering, keyboard play
+- [ ] T04 (S1) Env: lidar + lookahead observation, reward, termination (off-road, stuck, timeout, lap)
+- [ ] T05 (S1 S3) Tests: geometry, physics, `check_env`, reproducibility with seeds
+- [ ] T06 (S3) Baselines: random and pure pursuit; pure pursuit must lap tracks (Gate 1)
+- [ ] T07 (S2) Training script: SB3 PPO, parallel envs, config file per run, validation tracks, checkpoints, TensorBoard
+- [ ] T08 (S2) First MVP run (fixed gentle tracks); watch it; fix env/reward bugs
+- [ ] T09 (S2) Curriculum + procedural tracks; check it reaches full difficulty
+- [ ] T10 (S3) Evaluation script (test seeds, table, JSON, mean +- std over seeds)
+- [ ] T11 (S2) Final runs: 3 seeds of the target config
+- [ ] T12 (S2) Ablations (3 seeds each): no lookahead, no curriculum, one of {obs normalization, no smoothness penalty, steer-only}
+- [ ] T13 (S3) Learning-curve figure; failure analysis on 3 test tracks
+- [ ] T14 (S3) Videos: side by side vs pure pursuit, one failure case, lidar view; trajectory figure
 - [ ] T15 Gate 2 decision (stretch or not) logged below
 - [ ] T16 Report draft, slides, two demo rehearsals (live and offline fallback)
 
-**Done:** -
+**Done**
+- [x] T02 Code layout in CLAUDE.md and docs/SPEC.md (2026-11-02)
 
 ## Risks
 | Risk | Likelihood | Mitigation |
@@ -94,6 +95,12 @@ Probabilities are judgement-based estimates, not measurements. Ending with nothi
 - 2026-10-25 D06 Procedural spline tracks + curriculum. Why: unlimited tracks give a real generalization test.
 - 2026-10-25 D07 CPU-only PyTorch via the PyTorch CPU index. Why: PPO + small MLP is CPU-bound; avoids ~3 GB of CUDA libs.
 - 2026-10-25 D08 Seeds: train >= 100000, validation 1000-1999, test 10000+. Why: no leakage into reported numbers.
+
+- 2026-11-02 D09 Code in subpackages by role: sim/ (S1), learning/ (S2), evaluation/ (S3). Why: clear ownership with three people in parallel.
+- 2026-11-02 D10 `.claude/` stays gitignored. Why: each student has personal skills. Shared knowledge lives in CLAUDE.md, SPEC.md and PLAN.md.
+- 2026-11-02 D11 No strict code style beyond ruff. Why: keep code simple, avoid friction.
+- 2026-11-02 D12 Physics core in Rust, one call per step, built with a separate `make rust` target. Replaces the NumPy physics part of D02. Why: simulation speed, S1 chooses the binding.
+- 2026-11-02 D13 Contracts are plain functions and NumPy arrays, config is one YAML per experiment, PRs need one review. Why: simplest option for a small team.
 
 ## Report skeleton
 1. Problem and why RL  2. Environment (physics, tracks, sensors, reward)  3. Method (PPO, curriculum, hyperparameters)  4. Experiments (baselines, held-out results, ablations)  5. Failure analysis  6. Conclusions and limits.

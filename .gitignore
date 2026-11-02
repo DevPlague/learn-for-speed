@@ -15,5 +15,9 @@ videos/
 .idea/
 .vscode/
 .env
+
+# Rust build output
+target/
+*.so
 .claude/settings.local.json
 .claude/

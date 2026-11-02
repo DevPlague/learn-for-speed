@@ -22,4 +22,4 @@ make docker-run CMD="python your_script.py"
 make docker-shell
 ```
 
-`make help` lists everything. The code layout is up to the team; planning lives in [`docs/PLAN.md`](docs/PLAN.md).
+`make help` lists everything. Module structure and contracts are in [`docs/SPEC.md`](docs/SPEC.md) and planning lives in [`docs/PLAN.md`](docs/PLAN.md).
