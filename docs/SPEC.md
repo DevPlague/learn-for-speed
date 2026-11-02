@@ -45,11 +45,11 @@ Points are about 1 m apart, width is 8 m. Progress and lateral offset come from 
 
 | Item | Contract |
 |---|---|
-| Observation | One float32 vector of `OBS_DIM` = 27 in [-1, 1]. Sensors only, 25 lidar, signed speed, steering. No track map data |
+| Observation | One float32 vector of `OBS_DIM` = 28 in [-1, 1]. Sensors only, 25 lidar, signed forward speed, steering, sideways slip speed. No track map data |
 | Action | Float32 vector (2) in [-1, 1]. Steer (positive is left) and throttle. Negative throttle brakes while moving forward and reverses from standstill |
 | `reset(seed=...)` | Car on the start line of a new track from `track_seed`, or random from the training range when None |
 | `info` keys | `progress` (0 to 1 per lap), `lap_done`, `off_road`, `stuck`, `on_grass`, `speed`, `lap_time` when the lap is done |
-| Ends | Grass is allowed. Terminated on lap, off road (over 3 s in a row on grass or reaching the barrier) or stuck (under 2 m gained in 10 s). Truncated after 120 s. The next episode starts on the start line |
+| Ends | Grass is allowed. Terminated on lap, off road (over 10 s in a row on grass or reaching the barrier) or stuck (under 2 m gained in 10 s). Truncated after 120 s. The next episode starts on the start line |
 | `difficulty` | Plain attribute, the curriculum may change it between episodes (for example with `set_attr`) |
 
 The observation size is exported as `OBS_DIM` in `sim/env.py` so learning and evaluation never hardcode it. Lidar has 25 rays over 360 degrees, denser in front, with a range of 30 m. Rays stop at road edges and barriers. Grass slows the car and lowers its grip. The env ships a placeholder reward (`default_reward` in `sim/env.py`) until S2 replaces it.
@@ -70,7 +70,7 @@ One YAML file per experiment in `configs/`. The training script copies the resol
 | Topic | Decision |
 |---|---|
 | Language and tools | Python 3.12 only, uv, make, Linux, Docker for headless runs |
-| Simulation | Custom gymnasium env, kinematic bicycle model with a grip limit |
+| Simulation | Custom gymnasium env, bicycle model that grips in slow corners and drifts past the grip limit. Car state is [x, y, yaw, v, steer, v_lat] |
 | Physics core | Pure NumPy first (`sim/car.py`, `sim/lidar.py`, `sim/track.py`). Rust for car step, lidar and centerline queries only after profiling, with PyO3 and maturin |
 | Tracks method | Periodic cubic spline through noisy points on a circle. Difficulty sets the point count (6 to 12) and the noise. Tracks with a corner tighter than the road or overlapping roads are redrawn |
 | Car constants | dt 0.05 s, wheelbase 2.5 m, max steer 0.5 rad, max speed 20 m/s, reverse 5 m/s, grip limit 8 m/s^2 (4 on grass) |
@@ -98,7 +98,7 @@ Nothing here is decided. The owner decides, then moves the answer to the tables 
 
 | Question | Owner |
 |---|---|
-| Does Rust really pay off. NumPy env runs about 3.4k steps/s per core, decide the target | S1 |
+| Does Rust really pay off. NumPy env runs about 3.5k to 5k steps/s per core, decide the target | S1 |
 | Reward weights and termination thresholds | S2 |
 | Curriculum rule and parallel env count | S2 |
 | Who launches long training runs and where | S2 |

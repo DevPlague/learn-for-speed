@@ -12,10 +12,11 @@ import numpy as np
 from sim import car, lidar
 from sim.track import WALL_OFFSET, frenet, generate_track, locate
 
-OBS_DIM = lidar.N_RAYS + 2
+OBS_DIM = lidar.N_RAYS + 3
+SLIP_SCALE = 10.0  # m/s of sideways slip that maps to 1 in the observation
 
 MAX_TIME = 120.0  # s, then truncated
-GRASS_TIME = 3.0  # s in a row on grass, then failed
+GRASS_TIME = 10.0  # s in a row on grass, then failed
 STUCK_TIME = 10.0  # s without gaining STUCK_GAIN meters of progress, then failed
 STUCK_GAIN = 2.0
 TRAIN_SEED_MIN = 100_000
@@ -95,10 +96,9 @@ class RacingEnv(gym.Env):
         )
 
     def _obs(self):
-        _, _, _, v, steer = self.state
-        obs = np.concatenate(
-            [2 * self.hits / lidar.RANGE - 1, [v / car.MAX_SPEED, steer / car.MAX_STEER]]
-        )
+        _, _, _, v, steer, v_lat = self.state
+        own = [v / car.MAX_SPEED, steer / car.MAX_STEER, v_lat / SLIP_SCALE]
+        obs = np.concatenate([2 * self.hits / lidar.RANGE - 1, own])
         return np.clip(obs, -1, 1).astype(np.float32)
 
     def _info(self, off_road, lap_done, stuck):
@@ -121,7 +121,7 @@ class RacingEnv(gym.Env):
             from sim.render import Renderer  # lazy so training never imports pygame
 
             self._renderer = Renderer(self.render_mode)
-        return self._renderer.draw(self.track, self.state, self.hits, self.progress, self.steps)
+        return self._renderer.draw(self)
 
     def close(self):
         if self._renderer is not None:

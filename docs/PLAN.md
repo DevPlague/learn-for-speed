@@ -106,6 +106,7 @@ Probabilities are judgement-based estimates, not measurements. Ending with nothi
 - 2026-11-02 D16 Tracks are periodic cubic splines through noisy circle points, difficulty sets point count and noise, bad tracks are redrawn. Why: simple, deterministic per seed, valid by construction.
 - 2026-11-02 D17 Observation is sensors only, 25 lidar rays over 360 degrees plus speed and steering (27 floats). Replaces the obs part of D15. Lookahead, heading error and lateral offset are removed, so the "no lookahead" ablation in T12 no longer applies. Why: the agent must drive only from what its lidar sees.
 - 2026-11-02 D18 Car can reverse. Grass is allowed but slow and slippery with a small penalty. Barriers stand one road width past each edge. An attempt fails after 3 s on grass, at the barrier, or after 10 s without progress, and the next episode starts on the start line. Why: closer to real driving and the agent can recover from mistakes.
+- 2026-11-02 D19 Car drifts. The nose may turn harder than the tires hold (14 vs 8 m/s^2), the excess becomes sideways slip that the tires pull back at the grip limit. Slip speed is added to the observation (28 floats). Grass limit raised to 10 s. Refines D05, D17 and D18. Why: realistic fast cornering, and the agent must sense when it slides.
 
 ## Report skeleton
 1. Problem and why RL  2. Environment (physics, tracks, sensors, reward)  3. Method (PPO, curriculum, hyperparameters)  4. Experiments (baselines, held-out results, ablations)  5. Failure analysis  6. Conclusions and limits.
