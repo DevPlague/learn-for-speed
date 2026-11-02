@@ -32,6 +32,15 @@ def test_edges_do_not_overlap_the_rest_of_the_road():
     assert d[far].min() > t.width / 2
 
 
+@pytest.mark.parametrize("difficulty", DIFFICULTIES)
+def test_barriers_never_stand_on_the_road(difficulty):
+    for seed in range(10):
+        t = generate_track(seed, difficulty)
+        for wall in (t.left_wall, t.right_wall):
+            d = np.linalg.norm(wall[:, None] - t.centerline[None], axis=2)
+            assert d.min() > t.width / 2 + 0.5
+
+
 def test_frenet_and_locate():
     t = generate_track(1, 0.5)
     i = 100

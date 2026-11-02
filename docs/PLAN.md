@@ -104,6 +104,8 @@ Probabilities are judgement-based estimates, not measurements. Ending with nothi
 - 2026-11-02 D14 Sim is pure NumPy first, Rust only after profiling, binding PyO3 with maturin. Refines D12. Why: unblocks S2 and S3 for Gate 1 and Rust is not installed yet.
 - 2026-11-02 D15 Observation is 23 floats (11 lidar, speed, steering, heading error, lateral offset, 4 lookahead points at 5, 10, 20, 30 m). Action is [steer, throttle/brake]. Env ships a placeholder reward until S2 tunes it. Why: first usable env for the team.
 - 2026-11-02 D16 Tracks are periodic cubic splines through noisy circle points, difficulty sets point count and noise, bad tracks are redrawn. Why: simple, deterministic per seed, valid by construction.
+- 2026-11-02 D17 Observation is sensors only, 25 lidar rays over 360 degrees plus speed and steering (27 floats). Replaces the obs part of D15. Lookahead, heading error and lateral offset are removed, so the "no lookahead" ablation in T12 no longer applies. Why: the agent must drive only from what its lidar sees.
+- 2026-11-02 D18 Car can reverse. Grass is allowed but slow and slippery with a small penalty. Barriers stand one road width past each edge. An attempt fails after 3 s on grass, at the barrier, or after 10 s without progress, and the next episode starts on the start line. Why: closer to real driving and the agent can recover from mistakes.
 
 ## Report skeleton
 1. Problem and why RL  2. Environment (physics, tracks, sensors, reward)  3. Method (PPO, curriculum, hyperparameters)  4. Experiments (baselines, held-out results, ablations)  5. Failure analysis  6. Conclusions and limits.

@@ -33,6 +33,7 @@ A `Track` is a small dataclass with these fields.
 | `centerline` | NumPy array (N, 2), closed loop, meters |
 | `width` | Road width in meters |
 | `left`, `right` | NumPy arrays (N, 2) with the road edges |
+| `left_wall`, `right_wall` | NumPy arrays (N, 2) with the barriers, one road width of grass past each edge |
 | `s` | NumPy array (N,) with the arclength of each centerline point |
 | `heading` | NumPy array (N,) with the direction of travel in radians |
 | `length` | Lap length in meters |
@@ -44,14 +45,14 @@ Points are about 1 m apart, width is 8 m. Progress and lateral offset come from 
 
 | Item | Contract |
 |---|---|
-| Observation | One float32 vector of `OBS_DIM` = 23 in [-1, 1]. Order is 11 lidar, speed, steering, heading error, lateral offset, 4 lookahead points (x, y in the car frame) |
-| Action | Float32 vector (2) in [-1, 1]. Steer (positive is left) and throttle or brake |
-| `reset(seed=...)` | New track from `track_seed`, or random from the training range when None |
-| `info` keys | `progress` (0 to 1 per lap), `lap_done`, `off_road`, `stuck`, `speed`, `lap_time` when the lap is done |
-| Ends | Terminated on lap, off road (car center beyond half the width) or stuck (under 2 m gained in 3 s). Truncated after 120 s |
+| Observation | One float32 vector of `OBS_DIM` = 27 in [-1, 1]. Sensors only, 25 lidar, signed speed, steering. No track map data |
+| Action | Float32 vector (2) in [-1, 1]. Steer (positive is left) and throttle. Negative throttle brakes while moving forward and reverses from standstill |
+| `reset(seed=...)` | Car on the start line of a new track from `track_seed`, or random from the training range when None |
+| `info` keys | `progress` (0 to 1 per lap), `lap_done`, `off_road`, `stuck`, `on_grass`, `speed`, `lap_time` when the lap is done |
+| Ends | Grass is allowed. Terminated on lap, off road (over 3 s in a row on grass or reaching the barrier) or stuck (under 2 m gained in 10 s). Truncated after 120 s. The next episode starts on the start line |
 | `difficulty` | Plain attribute, the curriculum may change it between episodes (for example with `set_attr`) |
 
-The observation size is exported as `OBS_DIM` in `sim/env.py` so learning and evaluation never hardcode it. Lidar covers +-90 degrees with a range of 30 m. Lookahead distances are 5, 10, 20 and 30 m. The env ships a placeholder reward (`default_reward` in `sim/env.py`) until S2 replaces it.
+The observation size is exported as `OBS_DIM` in `sim/env.py` so learning and evaluation never hardcode it. Lidar has 25 rays over 360 degrees, denser in front, with a range of 30 m. Rays stop at road edges and barriers. Grass slows the car and lowers its grip. The env ships a placeholder reward (`default_reward` in `sim/env.py`) until S2 replaces it.
 
 ### Rust core
 Python calls Rust once per env step. The call takes the action and the current state and returns the new state, the lidar readings and the progress data. Arrays cross the boundary as NumPy arrays. Track generation stays in Python and the track arrays are passed to Rust at reset. The binding choice and the build details are open questions owned by S1. The build target is `make rust`, to be added by S1 together with the Dockerfile step.
@@ -72,11 +73,11 @@ One YAML file per experiment in `configs/`. The training script copies the resol
 | Simulation | Custom gymnasium env, kinematic bicycle model with a grip limit |
 | Physics core | Pure NumPy first (`sim/car.py`, `sim/lidar.py`, `sim/track.py`). Rust for car step, lidar and centerline queries only after profiling, with PyO3 and maturin |
 | Tracks method | Periodic cubic spline through noisy points on a circle. Difficulty sets the point count (6 to 12) and the noise. Tracks with a corner tighter than the road or overlapping roads are redrawn |
-| Car constants | dt 0.05 s, wheelbase 2.5 m, max steer 0.5 rad, max speed 20 m/s, grip limit 8 m/s^2 |
+| Car constants | dt 0.05 s, wheelbase 2.5 m, max steer 0.5 rad, max speed 20 m/s, reverse 5 m/s, grip limit 8 m/s^2 (4 on grass) |
 | Tests | pytest finds the packages through `pythonpath = ["."]` in pyproject |
 | Rendering | pygame, imported lazily, so training is headless |
 | Tracks | Closed spline tracks, difficulty knob in [0, 1], curriculum |
-| Observation | About 11 lidar rays, speed, steering, heading error, lateral offset, a few lookahead points, all scaled to [-1, 1] |
+| Observation | Sensors only, 25 lidar rays, speed, steering, all scaled to [-1, 1] |
 | Reward | Progress along the centerline, small time penalty, steering jitter penalty, off-road penalty, lap bonus |
 | Learning | stable-baselines3 PPO with MlpPolicy, CPU torch, VecNormalize on reward |
 | Seeds | Seed everything. Train from 100000, validation 1000 to 1999, test from 10000 |
@@ -97,7 +98,7 @@ Nothing here is decided. The owner decides, then moves the answer to the tables 
 
 | Question | Owner |
 |---|---|
-| Does Rust really pay off. NumPy env runs about 1.4k steps/s per core (lidar about half), decide the target | S1 |
+| Does Rust really pay off. NumPy env runs about 3.4k steps/s per core, decide the target | S1 |
 | Reward weights and termination thresholds | S2 |
 | Curriculum rule and parallel env count | S2 |
 | Who launches long training runs and where | S2 |

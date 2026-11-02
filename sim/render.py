@@ -8,6 +8,9 @@ from sim import car, lidar
 SIZE = (800, 600)
 SCALE = 8  # pixels per meter
 GRASS, ROAD, EDGE = (40, 110, 50), (70, 70, 75), (235, 235, 235)
+WALL = (150, 150, 160)
+RAY, HIT = (255, 220, 0, 70), (255, 220, 0, 170)  # alpha keeps the lidar see-through
+START_SQUARES = 8
 
 
 class Renderer:
@@ -17,6 +20,7 @@ class Renderer:
         flags = pygame.SHOWN if mode == "human" else pygame.HIDDEN
         self.screen = pygame.display.set_mode(SIZE, flags)
         self.surface = pygame.Surface(SIZE)
+        self.overlay = pygame.Surface(SIZE, pygame.SRCALPHA)
         self.font = pygame.font.SysFont("monospace", 18)
 
     def close(self):
@@ -38,10 +42,23 @@ class Renderer:
             pygame.draw.polygon(surf, ROAD, [screen_pos(p) for p in quad])
             pygame.draw.line(surf, EDGE, screen_pos(track.left[i]), screen_pos(track.left[j]), 2)
             pygame.draw.line(surf, EDGE, screen_pos(track.right[i]), screen_pos(track.right[j]), 2)
+            for wall in (track.left_wall, track.right_wall):
+                pygame.draw.line(surf, WALL, screen_pos(wall[i]), screen_pos(wall[j]), 4)
 
+        # checkered start line across the road at the first centerline point
+        for k in range(START_SQUARES):
+            a = track.right[0] + (track.left[0] - track.right[0]) * k / START_SQUARES
+            b = track.right[0] + (track.left[0] - track.right[0]) * (k + 1) / START_SQUARES
+            color = (255, 255, 255) if k % 2 else (20, 20, 20)
+            pygame.draw.line(surf, color, screen_pos(a), screen_pos(b), 6)
+
+        self.overlay.fill((0, 0, 0, 0))
         for ang, dist in zip(yaw + lidar.ANGLES, hits):
-            end = (x + dist * np.cos(ang), y + dist * np.sin(ang))
-            pygame.draw.line(surf, (255, 220, 0), screen_pos((x, y)), screen_pos(end), 1)
+            end = screen_pos((x + dist * np.cos(ang), y + dist * np.sin(ang)))
+            pygame.draw.line(self.overlay, RAY, screen_pos((x, y)), end, 1)
+            if dist < lidar.RANGE:
+                pygame.draw.circle(self.overlay, HIT, end, 3)
+        surf.blit(self.overlay, (0, 0))
 
         c, s = np.cos(yaw), np.sin(yaw)
         body = [(-1.0, -0.9), (3.0, -0.9), (3.0, 0.9), (-1.0, 0.9)]  # rear axle at the origin

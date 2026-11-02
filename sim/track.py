@@ -7,7 +7,9 @@ from scipy.interpolate import CubicSpline
 
 SPACING = 1.0  # meters between centerline points
 WIDTH = 8.0
-BASE_RADIUS = 60.0
+WALL_GAP = WIDTH  # grass between the road edge and the barrier
+WALL_OFFSET = WIDTH / 2 + WALL_GAP  # centerline to barrier
+BASE_RADIUS = 70.0
 MAX_TRIES = 50
 
 
@@ -17,6 +19,8 @@ class Track:
     width: float
     left: np.ndarray  # (N, 2) road edges
     right: np.ndarray  # (N, 2)
+    left_wall: np.ndarray  # (N, 2) barriers past the grass
+    right_wall: np.ndarray  # (N, 2)
     s: np.ndarray  # (N,) arclength of each centerline point
     heading: np.ndarray  # (N,) direction of travel, radians
     length: float
@@ -57,14 +61,14 @@ def _is_valid(center):
     n = len(center)
     seg = np.linalg.norm(np.roll(center, -1, axis=0) - center, axis=1)
     turn = np.angle(np.exp(1j * np.diff(_headings(center), append=_headings(center)[0])))
-    if (seg / np.maximum(np.abs(turn), 1e-9)).min() < 0.75 * WIDTH:
-        return False  # a corner tighter than the road is wide
-    # distant parts of the loop must stay clear of each other so the roads never overlap
+    if (seg / np.maximum(np.abs(turn), 1e-9)).min() < WALL_OFFSET:
+        return False  # the inner barrier would fold on itself
+    # distant parts of the loop must stay apart so no barrier stands on another part of the road
     idx = np.arange(n)
     gap = np.abs(idx[:, None] - idx[None, :])
-    far = np.minimum(gap, n - gap) * SPACING > 2 * WIDTH
+    far = np.minimum(gap, n - gap) * SPACING > 2 * WALL_OFFSET + WIDTH
     dist = np.linalg.norm(center[:, None] - center[None, :], axis=2)
-    return bool((dist[far] > 1.25 * WIDTH).all())
+    return bool((dist[far] > WALL_OFFSET + WIDTH / 2 + 1).all())
 
 
 def _build(center):
@@ -77,6 +81,8 @@ def _build(center):
         width=WIDTH,
         left=center + normal * WIDTH / 2,
         right=center - normal * WIDTH / 2,
+        left_wall=center + normal * WALL_OFFSET,
+        right_wall=center - normal * WALL_OFFSET,
         s=s,
         heading=heading,
         length=float(seg.sum()),
