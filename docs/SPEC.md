@@ -58,7 +58,7 @@ The observation size is exported as `OBS_DIM` in `sim/env.py` so learning and ev
 Python calls Rust once per env step. The call takes the action and the current state and returns the new state, the lidar readings and the progress data. Arrays cross the boundary as NumPy arrays. Track generation stays in Python and the track arrays are passed to Rust at reset. The binding choice and the build details are open questions owned by S1. The build target is `make rust`, to be added by S1 together with the Dockerfile step.
 
 ### Policy
-A policy is any callable that maps an observation to an action. A baseline is a plain function or a small class with `__call__`. A trained model is wrapped in a small function that calls `model.predict` with deterministic actions and returns the action. Pure pursuit may need track data, it reads it from the env it is given.
+A policy is any callable that maps an observation to an action. A baseline is a plain function or a small class with `__call__`. A trained model is wrapped in a small function that calls `model.predict` with deterministic actions and returns the action. Pure pursuit may need track data, it reads it from the env it is given. Useful attributes are `env.track`, `env.state` (x, y, yaw, v, steer, v_lat) and `env.idx` (nearest centerline index), with `lookahead` in `sim/track.py` to get points in the car frame. A trained agent never sees any of this.
 
 ### Evaluation
 `evaluate(policy, seeds, difficulty) -> dict` runs one episode per seed with deterministic actions. The dict has lap success rate, off-track rate, stuck rate, mean lap time of successful laps, mean speed and mean progress. The same function evaluates PPO, random and pure pursuit.
