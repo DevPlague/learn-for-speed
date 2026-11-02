@@ -1,0 +1,19 @@
+# Environments and caches
+.venv/
+__pycache__/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# Training outputs (Docker bind-mounts the repo, so they are saved locally). Do not commit.
+runs/
+videos/
+*.log
+
+# Editors / OS / local settings
+.DS_Store
+.idea/
+.vscode/
+.env
+.claude/settings.local.json
+.claude/
