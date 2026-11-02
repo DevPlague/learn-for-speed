@@ -40,7 +40,7 @@ If the deadline is earlier, cut from the bottom: Stretch, then ablations, then s
 - Done = works via `make`, tests/lint pass, logged here, someone else looked at it.
 
 ## Tasks
-**Doing:** -  |  **Review:** -
+**Doing:** T03 (S1), T04 (S1)  |  **Review:** -
 
 **Backlog**
 - [ ] T01 Everyone runs `make setup`; first person commits `uv.lock`; GitHub repo + protected `main`
@@ -101,6 +101,9 @@ Probabilities are judgement-based estimates, not measurements. Ending with nothi
 - 2026-11-02 D11 No strict code style beyond ruff. Why: keep code simple, avoid friction.
 - 2026-11-02 D12 Physics core in Rust, one call per step, built with a separate `make rust` target. Replaces the NumPy physics part of D02. Why: simulation speed, S1 chooses the binding.
 - 2026-11-02 D13 Contracts are plain functions and NumPy arrays, config is one YAML per experiment, PRs need one review. Why: simplest option for a small team.
+- 2026-11-02 D14 Sim is pure NumPy first, Rust only after profiling, binding PyO3 with maturin. Refines D12. Why: unblocks S2 and S3 for Gate 1 and Rust is not installed yet.
+- 2026-11-02 D15 Observation is 23 floats (11 lidar, speed, steering, heading error, lateral offset, 4 lookahead points at 5, 10, 20, 30 m). Action is [steer, throttle/brake]. Env ships a placeholder reward until S2 tunes it. Why: first usable env for the team.
+- 2026-11-02 D16 Tracks are periodic cubic splines through noisy circle points, difficulty sets point count and noise, bad tracks are redrawn. Why: simple, deterministic per seed, valid by construction.
 
 ## Report skeleton
 1. Problem and why RL  2. Environment (physics, tracks, sensors, reward)  3. Method (PPO, curriculum, hyperparameters)  4. Experiments (baselines, held-out results, ablations)  5. Failure analysis  6. Conclusions and limits.

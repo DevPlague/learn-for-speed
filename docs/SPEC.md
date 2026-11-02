@@ -33,21 +33,25 @@ A `Track` is a small dataclass with these fields.
 | `centerline` | NumPy array (N, 2), closed loop, meters |
 | `width` | Road width in meters |
 | `left`, `right` | NumPy arrays (N, 2) with the road edges |
+| `s` | NumPy array (N,) with the arclength of each centerline point |
+| `heading` | NumPy array (N,) with the direction of travel in radians |
+| `length` | Lap length in meters |
 
-How the core finds progress and lateral offset from a position is an open question owned by S1.
+Points are about 1 m apart, width is 8 m. Progress and lateral offset come from the nearest centerline point, searched in a window around the previous index, then projected on its tangent (`locate`, `frenet`, `lookahead` in `sim/track.py`).
 
 ### Environment
 `RacingEnv(track_seed=None, difficulty=0.0, render_mode=None)` is a standard gymnasium env.
 
 | Item | Contract |
 |---|---|
-| Observation | One float32 vector in [-1, 1]. Lidar rays, then speed, steering, heading error, lateral offset, centerline lookahead points |
-| Action | Float32 vector (2) in [-1, 1]. Steer and throttle or brake |
+| Observation | One float32 vector of `OBS_DIM` = 23 in [-1, 1]. Order is 11 lidar, speed, steering, heading error, lateral offset, 4 lookahead points (x, y in the car frame) |
+| Action | Float32 vector (2) in [-1, 1]. Steer (positive is left) and throttle or brake |
 | `reset(seed=...)` | New track from `track_seed`, or random from the training range when None |
-| `info` keys | `progress` (0 to 1 per lap), `lap_done`, `off_road`, `stuck`, `lap_time` when done |
-| Ends | Terminated on lap, off road or stuck. Truncated on timeout |
+| `info` keys | `progress` (0 to 1 per lap), `lap_done`, `off_road`, `stuck`, `speed`, `lap_time` when the lap is done |
+| Ends | Terminated on lap, off road (car center beyond half the width) or stuck (under 2 m gained in 3 s). Truncated after 120 s |
+| `difficulty` | Plain attribute, the curriculum may change it between episodes (for example with `set_attr`) |
 
-The observation size is exported as a constant so learning and evaluation never hardcode it.
+The observation size is exported as `OBS_DIM` in `sim/env.py` so learning and evaluation never hardcode it. Lidar covers +-90 degrees with a range of 30 m. Lookahead distances are 5, 10, 20 and 30 m. The env ships a placeholder reward (`default_reward` in `sim/env.py`) until S2 replaces it.
 
 ### Rust core
 Python calls Rust once per env step. The call takes the action and the current state and returns the new state, the lidar readings and the progress data. Arrays cross the boundary as NumPy arrays. Track generation stays in Python and the track arrays are passed to Rust at reset. The binding choice and the build details are open questions owned by S1. The build target is `make rust`, to be added by S1 together with the Dockerfile step.
@@ -66,7 +70,10 @@ One YAML file per experiment in `configs/`. The training script copies the resol
 |---|---|
 | Language and tools | Python 3.12 only, uv, make, Linux, Docker for headless runs |
 | Simulation | Custom gymnasium env, kinematic bicycle model with a grip limit |
-| Physics core | Rust for car step, lidar and centerline queries |
+| Physics core | Pure NumPy first (`sim/car.py`, `sim/lidar.py`, `sim/track.py`). Rust for car step, lidar and centerline queries only after profiling, with PyO3 and maturin |
+| Tracks method | Periodic cubic spline through noisy points on a circle. Difficulty sets the point count (6 to 12) and the noise. Tracks with a corner tighter than the road or overlapping roads are redrawn |
+| Car constants | dt 0.05 s, wheelbase 2.5 m, max steer 0.5 rad, max speed 20 m/s, grip limit 8 m/s^2 |
+| Tests | pytest finds the packages through `pythonpath = ["."]` in pyproject |
 | Rendering | pygame, imported lazily, so training is headless |
 | Tracks | Closed spline tracks, difficulty knob in [0, 1], curriculum |
 | Observation | About 11 lidar rays, speed, steering, heading error, lateral offset, a few lookahead points, all scaled to [-1, 1] |
@@ -90,14 +97,9 @@ Nothing here is decided. The owner decides, then moves the answer to the tables 
 
 | Question | Owner |
 |---|---|
-| Rust binding (PyO3 with maturin or another) and how the crate is laid out | S1 |
-| Does Rust really pay off, profile a NumPy version first | S1 |
-| How Rust finds progress and lateral offset on the track | S1 |
-| Exact lidar count, range and number of lookahead points | S1 |
-| Track generation method and how difficulty maps to shape | S1 |
+| Does Rust really pay off. NumPy env runs about 1.4k steps/s per core (lidar about half), decide the target | S1 |
 | Reward weights and termination thresholds | S2 |
 | Curriculum rule and parallel env count | S2 |
 | Who launches long training runs and where | S2 |
 | Pure pursuit parameters | S3 |
 | Number of evaluation tracks and difficulties | S3 |
-| How pytest finds the packages (a `pythonpath` setting in pyproject) | S1 |

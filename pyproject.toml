@@ -42,6 +42,7 @@ explicit = true
 
 [tool.pytest.ini_options]
 addopts = "-q"
+pythonpath = ["."]
 
 [tool.ruff]
 line-length = 100
