@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from sim.track import frenet, generate_track, locate, lookahead
+from sim.track import generate_track, lookahead, make_core
 
 DIFFICULTIES = [0.0, 0.5, 1.0]
 
@@ -45,12 +45,13 @@ def test_frenet_and_locate():
     t = generate_track(1, 0.5)
     i = 100
     left_point = t.centerline[i] + 2.0 * np.array([-np.sin(t.heading[i]), np.cos(t.heading[i])])
-    idx = locate(t, left_point)
-    progress, lateral = frenet(t, left_point, idx)
+    core = make_core(t)
+    idx = core.locate(*left_point)
+    progress, lateral = core.frenet(*left_point, idx)
     assert idx == i
     assert lateral == pytest.approx(2.0, abs=0.05)
     assert progress == pytest.approx(t.s[i] / t.length, abs=0.01)
-    assert locate(t, left_point, last=i - 5) == i  # window search finds the same point
+    assert core.locate(*left_point, last=i - 5) == i  # window search finds the same point
 
 
 def test_lookahead_in_car_frame():

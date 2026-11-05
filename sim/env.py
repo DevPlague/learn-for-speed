@@ -1,7 +1,7 @@
 """Gymnasium environment. One step = one car step, lidar, track queries and reward.
 
-The agent only observes its own sensors (lidar, speed, steering). The track geometry is used
-for progress, failure checks and reward, never as an observation.
+The agent only observes its own sensors (lidar, speed, steering, slip). The track geometry is
+used for progress, failure checks and reward, never as an observation.
 """
 
 from typing import ClassVar
@@ -10,10 +10,10 @@ import gymnasium as gym
 import numpy as np
 
 from sim import car, lidar
-from sim.track import WALL_OFFSET, frenet, generate_track, locate
+from sim.track import WALL_OFFSET, generate_track, make_core
 
 OBS_DIM = lidar.N_RAYS + 3
-SLIP_SCALE = 10.0  # m/s of sideways slip that maps to 1 in the observation
+SLIP_SCALE = car.MAX_SPEED  # m/s of sideways slip that maps to 1 in the observation
 
 MAX_TIME = 120.0  # s, then truncated
 GRASS_TIME = 10.0  # s in a row on grass, then failed
@@ -49,7 +49,7 @@ class RacingEnv(gym.Env):
             seed_ = self.track_seed
         self.track = generate_track(seed_, self.difficulty)
         t = self.track
-        self.segs = lidar.segments(t)
+        self.core = make_core(t)
         self.state = car.initial_state(*t.centerline[0], t.heading[0])  # on the start line
         self.idx = 0
         self.steps = 0
@@ -59,17 +59,16 @@ class RacingEnv(gym.Env):
         self.ref_step = 0
         self.on_grass = False
         self.grass_steps = 0
-        self.hits = lidar.cast(self.segs, self.state[:2], self.state[2])
+        self.hits = self.core.cast(*self.state[:3])
         return self._obs(), self._info(False, False, False)
 
     def step(self, action):
         action = np.asarray(action, dtype=np.float64)
-        self.state = car.step_car(self.state, action, self.on_grass)
+        self.state, self.hits, self.idx, frac, lateral = self.core.step(
+            self.state, action, self.idx, self.on_grass
+        )
         self.steps += 1
         t = self.track
-        pos = self.state[:2]
-        self.idx = locate(t, pos, self.idx)
-        frac, lateral = frenet(t, pos, self.idx)
         dprogress = (frac - self.last_frac + 0.5) % 1.0 - 0.5  # unwrap across the start line
         self.last_frac = frac
         self.progress += dprogress
@@ -85,7 +84,6 @@ class RacingEnv(gym.Env):
         terminated = bool(off_road or lap_done or stuck)
         truncated = bool(not terminated and self.steps * car.DT >= MAX_TIME)
 
-        self.hits = lidar.cast(self.segs, pos, self.state[2])
         reward = default_reward(dprogress, self.on_grass, off_road, lap_done)
         return (
             self._obs(),

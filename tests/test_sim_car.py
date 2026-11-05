@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 from sim import car, lidar
-from sim.track import Track
+from sim.track import Track, make_core
 
 
 def run(action, steps, state=None, on_grass=False):
@@ -74,14 +74,12 @@ def straight_corridor():
 
 
 def test_lidar_in_a_corridor():
-    segs = lidar.segments(straight_corridor())
-    on_road = lidar.cast(segs, np.array([0.0, 0.0]), 0.0)
+    on_road = make_core(straight_corridor()).cast(0.0, 0.0, 0.0)
     expected = np.minimum(lidar.RANGE, 4.0 / np.maximum(np.abs(np.sin(lidar.ANGLES)), 1e-9))
     assert np.allclose(on_road, expected)
     assert on_road[lidar.N_RAYS // 2] == lidar.RANGE  # straight ahead sees nothing in range
 
 
 def test_lidar_sees_the_barrier_from_the_grass():
-    segs = lidar.segments(straight_corridor())
-    on_grass = lidar.cast(segs, np.array([0.0, 8.0]), np.pi / 2)  # facing the left barrier
+    on_grass = make_core(straight_corridor()).cast(0.0, 8.0, np.pi / 2)  # facing the left barrier
     assert on_grass[lidar.N_RAYS // 2] == pytest.approx(4.0)
