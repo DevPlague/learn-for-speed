@@ -77,6 +77,34 @@ make docker-play SEED=1002 DIFFICULTY=1
 
 The grass is allowed but slow and slippery. An attempt fails after 10 s in a row on grass, on reaching the barrier, after 10 s without progress, or after 120 s. A failed attempt or a finished lap puts you back on the start line and prints the result in the terminal. Corners taken too fast make the car drift, as [the physics guide](docs/PHYSICS.md) explains. To change how the car behaves, edit the constants in `rust/src/car.rs` and run `make play` again. Rust rebuilds by itself.
 
+## Evaluation
+
+`evaluation/evaluate.py` runs a policy for one episode per track and prints a Markdown table with lap success, off-track and stuck rates, mean lap time, mean speed and mean progress. It also saves `runs/<out>/eval.json`.
+
+The baselines need no model and work right away.
+
+```bash
+make run CMD="python -m evaluation.evaluate --policy pure_pursuit --split val --n 20"
+make run CMD="python -m evaluation.evaluate --policy random --split val --n 20"
+```
+
+A PPO agent needs a model that the training script saved, a `.zip` file in `runs/<name>/`. That can be the final model of a finished run or a checkpoint saved while a run is still training, so you can check progress before it ends. Pass one file per training seed and the table shows mean ± std over them.
+
+```bash
+make run CMD="python -m evaluation.evaluate --policy ppo --model runs/a_s0/model.zip runs/a_s1/model.zip --split val --n 50"
+```
+
+| Option | Meaning |
+|---|---|
+| `--policy` | `random`, `pure_pursuit` or `ppo` |
+| `--model` | one or more PPO `.zip` files, only with `ppo` |
+| `--split` | `val` (seeds 1000-1999) while developing, `test` (seeds 10000+) only for the final results |
+| `--n` | number of tracks, the first n seeds of the split, so every policy drives the same tracks |
+| `--difficulty` | 0 to 1, default 0.5 |
+| `--out` | output folder, default `runs/eval_<policy>_<split>` |
+
+Training seeds are rejected so no training track reaches the results. Never tune anything on the test split. The full process is in [docs/EVALUATION.md](docs/EVALUATION.md), and what training must provide for it is in [docs/FOR_S2.md](docs/FOR_S2.md).
+
 ## Make commands
 
 `make help` prints this list.
