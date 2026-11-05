@@ -23,7 +23,7 @@ RUNS_DIR = Path("runs")
 
 def load_config(path):
     path = Path(path)
-    cfg = yaml.safe_load(path.read_text())
+    cfg = yaml.safe_load(path.read_text(encoding="utf-8-sig"))  # tolerates a Windows BOM
     cfg["name"] = path.stem
     return cfg
 
