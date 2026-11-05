@@ -15,6 +15,7 @@ dependencies = [
     "imageio-ffmpeg>=0.5",
     "matplotlib>=3.8",
     "pyyaml>=6",
+    "racing-core",
 ]
 
 [dependency-groups]
@@ -31,6 +32,7 @@ package = false
 # CPU-only PyTorch: PPO with a small MLP is CPU-bound, and the default Linux wheel drags in
 # ~3 GB of CUDA libraries we never use.
 [tool.uv.sources]
+racing-core = { path = "rust" }
 torch = [
     { index = "pytorch-cpu", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
 ]

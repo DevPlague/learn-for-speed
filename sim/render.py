@@ -105,6 +105,10 @@ class Renderer:
             grass = f"grass {env.grass_steps * car.DT:4.1f} / {GRASS_TIME:.0f} s"
             surf.blit(self.font.render(grass, True, WARN), (10, 54))
 
+        if self.mode == "human":  # recorded videos should not show the keys
+            keys = "arrows drive   down brakes, then reverses   esc quits"
+            surf.blit(self.font.render(keys, True, (255, 255, 255)), (10, SIZE[1] - 28))
+
         self._minimap(track)
         pygame.draw.circle(surf, CAR, self.map_to((x, y)), 5)
 
