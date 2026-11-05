@@ -29,7 +29,9 @@
 - Read docs/SPEC.md before touching a module interface. Interface changes update SPEC.md and PLAN.md Decisions in the same PR.
 - Never decide architecture, libraries or interfaces alone. Ask the student first, keep code simple, no over-engineering.
 - Work on a branch, never on main. Never run git commit or push and never add yourself to commits. Give the student a code block with the git add and git commit commands.
-- No semicolons or colons in comments and docs prose.
+- No semicolons or colons in comments and docs prose. Commit messages never contain semicolons.
+- Commit title is `type(scope): summary`, for example `fix(app): tester feedback, import limits and rotation slider`. Types are feat, fix, refactor, test, docs, chore. If the work matches a task in docs/PLAN.md, the summary starts with its ID and wording (`feat(learning): T07 training script with PPO`). Otherwise write a short summary of what was done.
+- Commit body groups the changes under short headings (config, code, tests, docs). Each heading has bullets with the concrete facts, naming files, functions and key figures.
 - `.claude/` is gitignored on purpose (personal skills). Shared rules live only in CLAUDE.md, SPEC.md and PLAN.md.
 - Keep answers and diffs short. English only (code, comments, docs).
 

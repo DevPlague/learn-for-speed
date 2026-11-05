@@ -52,7 +52,15 @@ Points are about 1 m apart, width is 8 m. Progress and lateral offset come from 
 | Ends | Grass is allowed. Terminated on lap, off road (over 10 s in a row on grass or reaching the barrier) or stuck (under 2 m gained in 10 s). Truncated after 120 s. The next episode starts on the start line |
 | `difficulty` | Plain attribute, the curriculum may change it between episodes (for example with `set_attr`) |
 
-The observation size is exported as `OBS_DIM` in `sim/env.py` so learning and evaluation never hardcode it. Lidar has 25 rays over 360 degrees, denser in front, with a range of 30 m. Rays stop at road edges and barriers. Grass slows the car and lowers its grip. The env ships a placeholder reward (`default_reward` in `sim/env.py`) until S2 replaces it.
+The observation size is exported as `OBS_DIM` in `sim/env.py` so learning and evaluation never hardcode it. Lidar has 25 rays over 360 degrees, denser in front, with a range of 30 m. Rays stop at road edges and barriers. Grass slows the car and lowers its grip. The env keeps a placeholder reward (`default_reward` in `sim/env.py`). Training replaces it with the `RaceReward` wrapper in `learning/`, so tuning the reward never touches `sim/`.
+
+### Learning
+| Item | Contract |
+|---|---|
+| `RaceReward(env, weights)` | Gymnasium wrapper in `learning/reward.py`. Reward is progress (laps) times `progress`, minus `time` per step, minus `jitter` times the steering change, minus `grass` per step on grass, minus `off_road` once, plus `lap` once. Weights come from the `reward` block of the config. Adds `is_success` (lap done) to `info` at the end of each episode |
+| Training | `python -m learning.train --config configs/<name>.yaml --seed <n>` writes `runs/<name>_s<n>/` with `config.yaml`, `checkpoints/`, `best_model.zip`, `final_model.zip`, `evaluations.npz` and TensorBoard logs |
+| Validation | Every `eval.freq` steps the policy drives each of the first `eval.tracks` validation seeds (from 1000) once with deterministic actions. `best_model.zip` is the best mean reward on them |
+| `load_policy(path)` | In `learning/policy.py`. Returns a policy callable for any saved model. No normalization stats are needed because only the reward is normalized |
 
 ### Rust core
 Python calls Rust once per env step. The call takes the action and the current state and returns the new state, the lidar readings and the progress data. Arrays cross the boundary as NumPy arrays. Track generation stays in Python and the track arrays are passed to Rust at reset. The binding choice and the build details are open questions owned by S1. The build target is `make rust`, to be added by S1 together with the Dockerfile step.
@@ -82,6 +90,7 @@ One YAML file per experiment in `configs/`. The training script copies the resol
 | Learning | stable-baselines3 PPO with MlpPolicy, CPU torch, VecNormalize on reward |
 | Seeds | Seed everything. Train from 100000, validation 1000 to 1999, test from 10000 |
 | Config | YAML per experiment |
+| Long runs | S2 launches them on a 10-core machine. `n_envs` in the config sets the parallel envs (`SubprocVecEnv`) |
 
 ## Code style
 Ruff for lint and format through `make lint` and `make format`. No other rules. Write short readable code, comments only where the reason is not obvious. English only. Do not use semicolons or colons in comments and docs prose.
@@ -100,7 +109,6 @@ Nothing here is decided. The owner decides, then moves the answer to the tables 
 |---|---|
 | Does Rust really pay off. NumPy env runs about 3.5k to 5k steps/s per core, decide the target | S1 |
 | Reward weights and termination thresholds | S2 |
-| Curriculum rule and parallel env count | S2 |
-| Who launches long training runs and where | S2 |
+| Curriculum rule | S2 |
 | Pure pursuit parameters | S3 |
 | Number of evaluation tracks and difficulties | S3 |

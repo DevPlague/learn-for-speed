@@ -40,7 +40,7 @@ If the deadline is earlier, cut from the bottom: Stretch, then ablations, then s
 - Done = works via `make`, tests/lint pass, logged here, someone else looked at it.
 
 ## Tasks
-**Doing:** T03 (S1), T04 (S1)  |  **Review:** -
+**Doing:** T03 (S1), T04 (S1), T07 (S2)  |  **Review:** -
 
 **Backlog**
 - [ ] T01 Everyone runs `make setup`; first person commits `uv.lock`; GitHub repo + protected `main`
@@ -107,6 +107,7 @@ Probabilities are judgement-based estimates, not measurements. Ending with nothi
 - 2026-11-02 D17 Observation is sensors only, 25 lidar rays over 360 degrees plus speed and steering (27 floats). Replaces the obs part of D15. Lookahead, heading error and lateral offset are removed, so the "no lookahead" ablation in T12 no longer applies. Why: the agent must drive only from what its lidar sees.
 - 2026-11-02 D18 Car can reverse. Grass is allowed but slow and slippery with a small penalty. Barriers stand one road width past each edge. An attempt fails after 3 s on grass, at the barrier, or after 10 s without progress, and the next episode starts on the start line. Why: closer to real driving and the agent can recover from mistakes.
 - 2026-11-02 D19 Car drifts. The nose may turn harder than the tires hold (14 vs 8 m/s^2), the excess becomes sideways slip that the tires pull back at the grip limit. Slip speed is added to the observation (28 floats). Grass limit raised to 10 s. Refines D05, D17 and D18. Why: realistic fast cornering, and the agent must sense when it slides.
+- 2026-11-03 D20 The training reward is a gymnasium wrapper in `learning/` (`RaceReward`) with weights from the config, and `sim/` keeps its placeholder. The wrapper reports lap success as `is_success` so SB3 logs the validation lap rate. Policies load with `load_policy` in `learning/policy.py`. Why: S1 and S2 never edit the same file, and S3 can evaluate any saved model through one function.
 
 ## Report skeleton
 1. Problem and why RL  2. Environment (physics, tracks, sensors, reward)  3. Method (PPO, curriculum, hyperparameters)  4. Experiments (baselines, held-out results, ablations)  5. Failure analysis  6. Conclusions and limits.
