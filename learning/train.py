@@ -1,6 +1,7 @@
 """PPO training from one YAML config. Run with
 python -m learning.train --config configs/tiny.yaml --seed 0
-Outputs go to runs/<config>_s<seed>/ (config copy, checkpoints, best and final model, TensorBoard).
+Outputs go to runs/<config>_s<seed>/ (config.yaml, model.zip, best_model.zip, checkpoints/,
+progress.csv and TensorBoard events).
 """
 
 import argparse
@@ -11,6 +12,7 @@ import numpy as np
 import yaml
 from stable_baselines3 import PPO
 from stable_baselines3.common.callbacks import CheckpointCallback, EvalCallback
+from stable_baselines3.common.logger import configure
 from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv, VecNormalize
 
@@ -72,12 +74,12 @@ def train(cfg, seed, runs_dir=RUNS_DIR):
     (run_dir / "config.yaml").write_text(yaml.safe_dump({**cfg, "seed": seed}, sort_keys=False))
 
     env = make_train_env(cfg)
-    model = PPO(
-        "MlpPolicy", env, seed=seed, device="cpu", tensorboard_log=str(run_dir), **cfg["ppo"]
-    )
+    model = PPO("MlpPolicy", env, seed=seed, device="cpu", **cfg["ppo"])
+    # progress.csv gives S3 the learning curves without reading TensorBoard files
+    model.set_logger(configure(str(run_dir), ["csv", "tensorboard"]))
     checkpoint, evaluation = make_callbacks(cfg, run_dir)
-    model.learn(cfg["total_timesteps"], callback=[checkpoint, evaluation], tb_log_name="tb")
-    model.save(run_dir / "final_model")
+    model.learn(cfg["total_timesteps"], callback=[checkpoint, evaluation])
+    model.save(run_dir / "model")
     env.close()
     evaluation.eval_env.close()
     print_summary(run_dir, evaluation)

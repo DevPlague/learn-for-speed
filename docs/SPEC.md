@@ -59,7 +59,7 @@ The observation size is exported as `OBS_DIM` in `sim/env.py` so learning and ev
 | Item | Contract |
 |---|---|
 | `RaceReward(env, weights)` | Gymnasium wrapper in `learning/reward.py`. Reward is progress (laps) times `progress`, minus `time` per step, minus `jitter` times the steering change, minus `grass` per step on grass, minus `off_road` once, plus `lap` once. Weights come from the `reward` block of the config. Adds `is_success` (lap done) to `info` at the end of each episode |
-| Training | `python -m learning.train --config configs/<name>.yaml --seed <n>` writes `runs/<name>_s<n>/` with `config.yaml`, `checkpoints/`, `best_model.zip`, `final_model.zip`, `evaluations.npz` and TensorBoard logs |
+| Training | `python -m learning.train --config configs/<name>.yaml --seed <n>` writes `runs/<name>_s<n>/` with `config.yaml`, `model.zip` (final model), `best_model.zip`, `checkpoints/`, `evaluations.npz`, `progress.csv` (SB3 logger, one row per PPO update) and TensorBoard events |
 | Validation | Every `eval.freq` steps the policy drives each of the first `eval.tracks` validation seeds (from 1000) once with deterministic actions. `best_model.zip` is the best mean reward on them |
 | `load_policy(path)` | In `learning/policy.py`. Returns a policy callable for any saved model. No normalization stats are needed because only the reward is normalized |
 

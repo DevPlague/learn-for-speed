@@ -14,7 +14,8 @@ def test_tiny_run_saves_a_loadable_policy(tmp_path):
     run_dir = train(cfg, seed=0, runs_dir=tmp_path)
 
     assert (run_dir / "config.yaml").exists()
-    policy = load_policy(run_dir / "final_model.zip")
+    assert (run_dir / "progress.csv").exists()
+    policy = load_policy(run_dir / "model.zip")
     obs, _ = RacingEnv(track_seed=1000).reset(seed=0)
     action = policy(obs)
     assert action.shape == (2,) and np.all(np.abs(action) <= 1)
