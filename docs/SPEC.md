@@ -68,7 +68,7 @@ Arrays cross the boundary as float64 NumPy arrays. `core.cast`, `core.locate`, `
 A policy is any callable that maps an observation to an action. A baseline is a plain function or a small class with `__call__`. A trained model is wrapped in a small function that calls `model.predict` with deterministic actions and returns the action. Pure pursuit may need track data, it reads it from the env it is given. Useful attributes are `env.track`, `env.state` (x, y, yaw, v, steer, v_lat) and `env.idx` (nearest centerline index), with `lookahead` in `sim/track.py` to get points in the car frame. A trained agent never sees any of this.
 
 ### Evaluation
-`evaluate(policy, seeds, difficulty) -> dict` runs one episode per seed with deterministic actions. The dict has lap success rate, off-track rate, stuck rate, mean lap time of successful laps, mean speed and mean progress. The same function evaluates PPO, random and pure pursuit.
+`evaluate(policy, seeds, difficulty) -> dict` runs one episode per seed with deterministic actions. The dict has lap success rate, off-track rate, stuck rate, mean lap time of successful laps, mean speed and mean progress. The same function evaluates PPO, random and pure pursuit. An optional `env` argument passes the env a policy reads from, like pure pursuit. Seeds must come from the validation or test split, training seeds raise an error.
 
 ### Config and runs
 One YAML file per experiment in `configs/`. The training script copies the resolved config to `runs/<name>/` and writes checkpoints and logs there. Run names are `<config>_s<seed>`. Only models chosen on purpose are committed, as small files outside `runs/`.
