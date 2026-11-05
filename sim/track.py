@@ -1,8 +1,9 @@
-"""Closed spline tracks from a seed and a difficulty in [0, 1], plus queries along the centerline."""
+"""Closed spline tracks from a seed and a difficulty in [0, 1]. Queries are in the Rust core."""
 
 from dataclasses import dataclass
 
 import numpy as np
+import racing_core
 from scipy.interpolate import CubicSpline
 
 SPACING = 1.0  # meters between centerline points
@@ -89,21 +90,18 @@ def _build(center):
     )
 
 
-def locate(track, pos, last=None, window=20):
-    """Index of the nearest centerline point. Searches only near `last` when it is given."""
-    n = len(track.centerline)
-    cand = np.arange(n) if last is None else (last + np.arange(-window, window + 1)) % n
-    d = np.linalg.norm(track.centerline[cand] - pos, axis=1)
-    return int(cand[np.argmin(d)])
-
-
-def frenet(track, pos, idx):
-    """Progress in [0, 1) along the lap and signed lateral offset (left is positive)."""
-    h = track.heading[idx]
-    delta = pos - track.centerline[idx]
-    along = delta[0] * np.cos(h) + delta[1] * np.sin(h)
-    lateral = -delta[0] * np.sin(h) + delta[1] * np.cos(h)
-    return ((track.s[idx] + along) % track.length) / track.length, lateral
+def make_core(track):
+    """Hand the track to Rust, once per reset."""
+    return racing_core.TrackCore(
+        track.centerline,
+        track.heading,
+        track.s,
+        track.length,
+        track.left,
+        track.right,
+        track.left_wall,
+        track.right_wall,
+    )
 
 
 def lookahead(track, idx, pos, yaw, dists):

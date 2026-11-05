@@ -40,21 +40,18 @@ If the deadline is earlier, cut from the bottom: Stretch, then ablations, then s
 - Done = works via `make`, tests/lint pass, logged here, someone else looked at it.
 
 ## Tasks
-**Doing:** T03 (S1), T04 (S1)  |  **Review:** -
+**Doing:** -  |  **Review:** T17 (S1)
 
 **Backlog**
 - [ ] T01 Everyone runs `make setup`; first person commits `uv.lock`; GitHub repo + protected `main`
 - [ ] T17 (S1) Rust core crate, binding choice, `make rust` target and Dockerfile step. Profile a NumPy version first
-- [ ] T03 (S1) Env: car (bicycle + grip limit), spline tracks with difficulty, rendering, keyboard play
-- [ ] T04 (S1) Env: lidar + lookahead observation, reward, termination (off-road, stuck, timeout, lap)
-- [ ] T05 (S1 S3) Tests: geometry, physics, `check_env`, reproducibility with seeds
 - [ ] T06 (S3) Baselines: random and pure pursuit; pure pursuit must lap tracks (Gate 1)
 - [ ] T07 (S2) Training script: SB3 PPO, parallel envs, config file per run, validation tracks, checkpoints, TensorBoard
 - [ ] T08 (S2) First MVP run (fixed gentle tracks); watch it; fix env/reward bugs
 - [ ] T09 (S2) Curriculum + procedural tracks; check it reaches full difficulty
 - [ ] T10 (S3) Evaluation script (test seeds, table, JSON, mean +- std over seeds)
 - [ ] T11 (S2) Final runs: 3 seeds of the target config
-- [ ] T12 (S2) Ablations (3 seeds each): no lookahead, no curriculum, one of {obs normalization, no smoothness penalty, steer-only}
+- [ ] T12 (S2) Ablations (3 seeds each): no lookahead (obsolete since D17, S2 to pick a replacement), no curriculum, one of {obs normalization, no smoothness penalty, steer-only}
 - [ ] T13 (S3) Learning-curve figure; failure analysis on 3 test tracks
 - [ ] T14 (S3) Videos: side by side vs pure pursuit, one failure case, lidar view; trajectory figure
 - [ ] T15 Gate 2 decision (stretch or not) logged below
@@ -62,6 +59,9 @@ If the deadline is earlier, cut from the bottom: Stretch, then ablations, then s
 
 **Done**
 - [x] T02 Code layout in CLAUDE.md and docs/SPEC.md (2026-11-02)
+- [x] T03 (S1) Env: car, spline tracks with difficulty, rendering, keyboard play (2026-11-05)
+- [x] T04 (S1) Env: lidar observation, placeholder reward, termination (2026-11-05)
+- [x] T05 (S1) Tests: geometry, physics, `check_env`, reproducibility with seeds. S3 may add more (2026-11-05)
 
 ## Risks
 | Risk | Likelihood | Mitigation |
@@ -107,6 +107,10 @@ Probabilities are judgement-based estimates, not measurements. Ending with nothi
 - 2026-11-02 D17 Observation is sensors only, 25 lidar rays over 360 degrees plus speed and steering (27 floats). Replaces the obs part of D15. Lookahead, heading error and lateral offset are removed, so the "no lookahead" ablation in T12 no longer applies. Why: the agent must drive only from what its lidar sees.
 - 2026-11-02 D18 Car can reverse. Grass is allowed but slow and slippery with a small penalty. Barriers stand one road width past each edge. An attempt fails after 3 s on grass, at the barrier, or after 10 s without progress, and the next episode starts on the start line. Why: closer to real driving and the agent can recover from mistakes.
 - 2026-11-02 D19 Car drifts. The nose may turn harder than the tires hold (14 vs 8 m/s^2), the excess becomes sideways slip that the tires pull back at the grip limit. Slip speed is added to the observation (28 floats). Grass limit raised to 10 s. Refines D05, D17 and D18. Why: realistic fast cornering, and the agent must sense when it slides.
+- 2026-11-05 D20 Rust with PyO3 and maturin replaces NumPy for the car step, lidar and track queries. Replaces D14. Track generation stays in Python, so every seed keeps its track. Rust is required locally, with Docker as the alternative. Measured env.step went from about 190 us to about 30 us, about 5k to about 30k steps/s per core. Track generation still costs 13 to 24 ms per reset. Why: simulation speed, the student chose to do it now.
+- 2026-11-05 D21 Physics constants live in Rust and are exported to Python. Why: one source of truth next to the equations. Tuning needs a rebuild, which uv does by itself.
+- 2026-11-05 D22 Three physics fixes after the exact port. Body-frame update instead of rotating the velocity, so a gripping corner loses only drag. Speed clipped again after that update. Slip observation scale raised from 10 to 20 m/s, since a spin reaches 19 m/s. Why: found by measurement, and the last one changes the observation.
+- 2026-11-05 D23 Physics guide in docs/PHYSICS.md, with its numbers checked by tests/test_sim_physics.py. Why: everyone must be able to explain the physics in the oral defense.
 
 ## Report skeleton
 1. Problem and why RL  2. Environment (physics, tracks, sensors, reward)  3. Method (PPO, curriculum, hyperparameters)  4. Experiments (baselines, held-out results, ablations)  5. Failure analysis  6. Conclusions and limits.

@@ -1,0 +1,16 @@
+[package]
+name = "racing-core"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "racing_core"
+crate-type = ["cdylib"]
+
+[dependencies]
+numpy = "0.30"
+pyo3 = "0.30"
+
+[profile.release]
+lto = true
+codegen-units = 1

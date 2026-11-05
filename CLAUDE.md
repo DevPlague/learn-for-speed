@@ -3,11 +3,11 @@
 2D top-down racing car. PPO (stable-baselines3) learns to drive procedurally generated tracks; judged on held-out tracks vs baselines (random, pure pursuit) and ablations. School project, 3 students, ~6 weeks. Python 3.12 only, uv, Linux. Deadline/format unknown: keep a demo-ready state.
 
 ## Commands (use make, never raw pip/python)
-- `make setup` env; `make run CMD="python x.py"`; `make test | lint | format | tb | clean`
-- Docker (headless, outputs bind-mounted): `make docker-build | docker-run CMD=".." | docker-shell | docker-test | docker-tb`
+- `make setup` env; `make play` drive by keyboard; `make run CMD="python x.py"`; `make test | lint | format | rust | bench | tb | clean`
+- Docker (headless, outputs bind-mounted): `make docker-build | docker-run CMD=".." | docker-shell | docker-test | docker-play | docker-tb`
 
 ## Layout
-- `sim/` S1 (Simulation): track, car, lidar, env, render. Physics core in Rust (`make rust`, to be added by S1).
+- `sim/` S1 (Simulation): track generation, env, render, play. `rust/` S1: per-step physics. Formulas in docs/PHYSICS.md.
 - `learning/` S2 (Learning): reward, PPO training, curriculum. `configs/` one YAML per experiment.
 - `evaluation/` S3 (Evaluation): baselines, evaluate, plots, videos. `tests/` each owner tests their folder.
 - Only the owner edits a folder. Contracts between modules: docs/SPEC.md.
@@ -15,8 +15,8 @@
 
 ## Design (intended)
 - Custom gymnasium env; physics core in Rust (one call per step, NumPy arrays), pygame only for rendering (lazy import) so training is headless.
-- Kinematic bicycle car with grip limit; closed spline tracks with a difficulty knob in [0,1]; curriculum.
-- Obs: ~11 lidar rays + speed, steering, heading error, lateral offset, a few centerline lookahead points (all scaled to [-1,1]). Action: [steer, throttle/brake] in [-1,1].
+- Bicycle car that grips in slow corners and drifts in fast ones, can reverse; closed spline tracks with a difficulty knob in [0,1]; curriculum.
+- Obs: sensors only, 25 lidar rays + speed, steering, slip (all scaled to [-1,1]). No track map. Action: [steer, throttle/brake] in [-1,1].
 - Reward: progress along centerline - small time penalty - steering jitter; off-road penalty; lap bonus. PPO MlpPolicy, CPU torch, VecNormalize on reward.
 
 ## Rules
