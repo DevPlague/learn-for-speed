@@ -1,5 +1,7 @@
 """Training reward wrapper"""
+
 from dataclasses import dataclass
+
 import gymnasium as gym
 
 
