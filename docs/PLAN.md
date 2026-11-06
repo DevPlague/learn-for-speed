@@ -40,16 +40,11 @@ If the deadline is earlier, cut from the bottom: Stretch, then ablations, then s
 - Done = works via `make`, tests/lint pass, logged here, someone else looked at it.
 
 ## Tasks
-**Doing:** T07 (S2)  |  **Review:** T17 (S1)
+**Doing:** T08 (S2)  |  **Review:** none
 
 **Backlog**
-- [ ] T01 Everyone runs `make setup`; first person commits `uv.lock`; GitHub repo + protected `main`
-- [ ] T17 (S1) Rust core crate, binding choice, `make rust` target and Dockerfile step. Profile a NumPy version first
-- [ ] T06 (S3) Baselines: random and pure pursuit; pure pursuit must lap tracks (Gate 1)
-- [ ] T07 (S2) Training script: SB3 PPO, parallel envs, config file per run, validation tracks, checkpoints, TensorBoard
 - [ ] T08 (S2) First MVP run (fixed gentle tracks); watch it; fix env/reward bugs
 - [ ] T09 (S2) Curriculum + procedural tracks; check it reaches full difficulty
-- [ ] T10 (S3) Evaluation script (test seeds, table, JSON, mean +- std over seeds)
 - [ ] T11 (S2) Final runs: 3 seeds of the target config
 - [ ] T12 (S2) Ablations (3 seeds each): no lookahead (obsolete since D17, S2 to pick a replacement), no curriculum, one of {obs normalization, no smoothness penalty, steer-only}
 - [ ] T13 (S3) Learning-curve figure; failure analysis on 3 test tracks
@@ -61,6 +56,11 @@ If the deadline is earlier, cut from the bottom: Stretch, then ablations, then s
 - [x] T02 Code layout in CLAUDE.md and docs/SPEC.md (2026-11-02)
 - [x] T03 (S1) Env: car, spline tracks with difficulty, rendering, keyboard play (2026-11-05)
 - [x] T04 (S1) Env: lidar observation, placeholder reward, termination (2026-11-05)
+- [x] T01 Everyone runs `make setup`; first person commits `uv.lock`; GitHub repo + protected `main` (2026-11-05)
+- [x] T17 (S1) Rust core crate, binding choice, `make rust` target and Dockerfile step. Profile a NumPy version first (2026-11-05)
+- [x] T06 (S3) Baselines: random and pure pursuit; pure pursuit must lap tracks (Gate 1) (2026-11-05)
+- [x] T10 (S3) Evaluation script (test seeds, table, JSON, mean +- std over seeds) (2026-11-05)
+- [x] T07 (S2) Training script: SB3 PPO, parallel envs, config file per run, validation tracks, checkpoints, TensorBoard (2026-11-06)
 - [x] T05 (S1) Tests: geometry, physics, `check_env`, reproducibility with seeds. S3 may add more (2026-11-05)
 
 ## Risks
