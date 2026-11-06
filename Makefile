@@ -5,6 +5,7 @@ IMAGE ?= racing-rl
 CMD   ?= python --version
 SEED  ?= 1000
 DIFFICULTY ?= 0.5
+RUNS  ?=
 
 # rustup installs here, and a new login is needed before the shell knows about it
 export PATH := $(HOME)/.cargo/bin:$(PATH)
@@ -57,6 +58,10 @@ bench: ## Print env steps per second and track generation time
 .PHONY: tb
 tb: ## TensorBoard on http://localhost:6006 (reads ./runs)
 	uv run tensorboard --logdir runs --port 6006
+
+.PHONY: dashboard
+dashboard: ## Build the local dashboard into runs/dashboard, e.g. make dashboard RUNS="mvp_s0"
+	uv run python -m dashboard.build --runs $(RUNS)
 
 .PHONY: clean
 clean: ## Remove caches (keeps runs/, videos/, models/)

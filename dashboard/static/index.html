@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>racing-rl dashboard</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="logo" data-icon="flag"></div>
+      <div>
+        <div class="brand-name">racing-rl</div>
+        <div class="brand-sub">PPO lab</div>
+      </div>
+    </div>
+    <label class="search">
+      <span data-icon="search"></span>
+      <input id="search" placeholder="Search runs...">
+      <kbd>/</kbd>
+    </label>
+    <div class="nav-label">Main</div>
+    <nav id="nav"></nav>
+    <div class="runs-block">
+      <div class="nav-label row">Runs <span id="run-count" class="badge"></span></div>
+      <ul id="run-list"></ul>
+    </div>
+    <div class="sidebar-foot">
+      <div class="user">
+        <div class="avatar">S2</div>
+        <div>
+          <div class="user-name">Learning</div>
+          <div class="user-sub" id="meta-line"></div>
+        </div>
+      </div>
+      <div class="theme" id="theme">
+        <button data-theme-set="light"><span data-icon="sun"></span>Light</button>
+        <button data-theme-set="dark"><span data-icon="moon"></span>Dark</button>
+        <button data-theme-set="system"><span data-icon="monitor"></span>System</button>
+      </div>
+    </div>
+  </aside>
+
+  <main>
+    <header class="topbar">
+      <button class="crumb" id="crumb"><span data-icon="chevron"></span><span id="crumb-text">Overview</span></button>
+      <div class="top-actions">
+        <button class="icon-btn" title="Copy evaluate command" id="copy-eval"><span data-icon="bell"></span></button>
+        <button class="btn dark" id="new-run"><span data-icon="plus"></span>New run</button>
+        <button class="icon-btn" id="toggle-side" title="Toggle sidebar"><span data-icon="menu"></span></button>
+      </div>
+    </header>
+
+    <section class="view" data-view="overview">
+      <div class="hero card">
+        <div class="hero-text">
+          <div class="eyebrow">Welcome back</div>
+          <h1>Learning to race</h1>
+          <p>PPO against baselines on held-out validation tracks.</p>
+          <div class="row gap">
+            <button class="btn dark" data-goto="simulation"><span data-icon="play"></span>Watch replay</button>
+            <button class="btn ghost" data-goto="training"><span data-icon="chart"></span>Learning curves</button>
+          </div>
+        </div>
+        <div class="hero-art"><svg id="hero-track" viewBox="0 0 400 220" preserveAspectRatio="xMidYMid slice"></svg></div>
+      </div>
+
+      <div class="row between">
+        <div class="tabs" id="group-tabs"></div>
+        <div class="pill" id="difficulty-pill"></div>
+      </div>
+
+      <div class="grid-main">
+        <div class="col">
+          <h2><span data-icon="target"></span>Headline metrics</h2>
+          <div class="grid-2" id="kpis"></div>
+          <h2><span data-icon="eye"></span>Replay board</h2>
+          <div class="grid-3" id="board"></div>
+        </div>
+        <div class="col">
+          <h2><span data-icon="layers"></span>Policies</h2>
+          <div class="card list" id="policies"></div>
+          <h3>Quick stats</h3>
+          <div class="grid-2 small" id="stats"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" data-view="training">
+      <h2><span data-icon="chart"></span>Training curves</h2>
+      <p class="muted">Mean line per config, band shows plus or minus one std when a config has several seeds.</p>
+      <div class="chips" id="run-chips"></div>
+      <div class="grid-2" id="train-charts"></div>
+    </section>
+
+    <section class="view" data-view="validation">
+      <h2><span data-icon="check"></span>Validation</h2>
+      <p class="muted" id="val-note"></p>
+      <div class="card"><div class="table-wrap" id="val-table"></div></div>
+      <div class="grid-2" id="val-charts"></div>
+    </section>
+
+    <section class="view" data-view="test">
+      <h2><span data-icon="lock"></span>Test</h2>
+      <div id="test-body"></div>
+    </section>
+
+    <section class="view" data-view="simulation">
+      <div class="row between wrap">
+        <h2><span data-icon="play"></span>Simulation replay</h2>
+        <div class="tabs" id="sim-mode"></div>
+      </div>
+      <div class="card controls">
+        <select id="sim-pick"></select>
+        <button class="btn dark" id="play"><span data-icon="play"></span>Play</button>
+        <div class="seg" id="speed"></div>
+        <input type="range" id="scrub" min="0" max="1000" value="0">
+        <span class="mono" id="clock">0.0 s</span>
+        <label class="toggle"><input type="checkbox" id="opt-lidar"> lidar</label>
+        <label class="toggle"><input type="checkbox" id="opt-follow"> follow</label>
+        <label class="toggle"><input type="checkbox" id="opt-trail" checked> trail</label>
+      </div>
+      <div class="grid-3" id="sim-grid"></div>
+    </section>
+
+    <section class="view" data-view="physics">
+      <div class="row between wrap">
+        <h2><span data-icon="gauge"></span>Physics and behaviour</h2>
+        <div class="row gap">
+          <select id="phys-policy"></select>
+          <select id="phys-seed"></select>
+        </div>
+      </div>
+      <div class="grid-main">
+        <div class="col"><div class="grid-2" id="phys-charts"></div></div>
+        <div class="col">
+          <div class="card"><canvas id="phys-map" height="300"></canvas><div class="legend" id="phys-legend"></div></div>
+          <h3>Failures</h3>
+          <div class="card list" id="failures"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="toast" id="toast"></div>
+  <script src="vendor/chart.umd.min.js"></script>
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
