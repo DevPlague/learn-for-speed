@@ -21,21 +21,28 @@ def test_driving_forward_beats_standing_still():
     assert reward_after_20_steps([0.0, 1.0]) > reward_after_20_steps([0.0, 0.0])
 
 
-def test_standing_still_costs_the_time_penalty():
-    assert reward_after_20_steps([0.0, 0.0]) == pytest.approx(-DEFAULT_WEIGHTS.time)
+def test_reversing_beats_standing_still():
+    assert reward_after_20_steps([0.0, -1.0]) > reward_after_20_steps([0.0, 0.0])
+
+
+def test_standing_still_costs_time_and_idle():
+    expected = -(DEFAULT_WEIGHTS.time + DEFAULT_WEIGHTS.idle)
+    assert reward_after_20_steps([0.0, 0.0]) == pytest.approx(expected)
 
 
 def test_steering_jitter_is_penalized():
-    env = make_env(RewardWeights(progress=0, time=0))
+    env = make_env(RewardWeights(progress=0, time=0, idle=0))
     _, steady, *_ = env.step([0.0, 0.0])
     _, jitter, *_ = env.step([1.0, 0.0])
     assert steady == 0 and jitter == pytest.approx(-DEFAULT_WEIGHTS.jitter)
 
 
-def test_episode_end_reports_success():
-    env = make_env()
+def test_getting_stuck_ends_with_the_stuck_penalty():
+    env = make_env(RewardWeights(time=0, idle=0))
     done = False
     while not done:
-        _, _, terminated, truncated, info = env.step([0.0, 0.0])
+        _, reward, terminated, truncated, info = env.step([0.0, 0.0])
         done = terminated or truncated
-    assert info["is_success"] is False
+    assert info["stuck"] and info["is_success"] is False
+    assert reward == pytest.approx(-DEFAULT_WEIGHTS.stuck)
+    assert DEFAULT_WEIGHTS.stuck > DEFAULT_WEIGHTS.off_road
