@@ -40,7 +40,7 @@ If the deadline is earlier, cut from the bottom: Stretch, then ablations, then s
 - Done = works via `make`, tests/lint pass, logged here, someone else looked at it.
 
 ## Tasks
-**Doing:** -  |  **Review:** T17 (S1)
+**Doing:** T07 (S2)  |  **Review:** T17 (S1)
 
 **Backlog**
 - [ ] T01 Everyone runs `make setup`; first person commits `uv.lock`; GitHub repo + protected `main`
@@ -112,6 +112,7 @@ Probabilities are judgement-based estimates, not measurements. Ending with nothi
 - 2026-11-05 D21 Physics constants live in Rust and are exported to Python. Why: one source of truth next to the equations. Tuning needs a rebuild, which uv does by itself.
 - 2026-11-05 D22 Three physics fixes after the exact port. Body-frame update instead of rotating the velocity, so a gripping corner loses only drag. Speed clipped again after that update. Slip observation scale raised from 10 to 20 m/s, since a spin reaches 19 m/s. Why: found by measurement, and the last one changes the observation.
 - 2026-11-05 D23 Physics guide in docs/PHYSICS.md, with its numbers checked by tests/test_sim_physics.py. Why: everyone must be able to explain the physics in the oral defense.
+- 2026-11-05 D24 The training reward is a gymnasium wrapper in `learning/` (`RaceReward`) with weights from the config, and `sim/` keeps its placeholder. The wrapper reports lap success as `is_success` so SB3 logs the validation lap rate. Policies load with `load_policy` in `learning/policy.py`. Why: S1 and S2 never edit the same file, and S3 can evaluate any saved model through one function.
 
 ## Report skeleton
 1. Problem and why RL  2. Environment (physics, tracks, sensors, reward)  3. Method (PPO, curriculum, hyperparameters)  4. Experiments (baselines, held-out results, ablations)  5. Failure analysis  6. Conclusions and limits.
