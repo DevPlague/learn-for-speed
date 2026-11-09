@@ -5,7 +5,7 @@ build-backend = "maturin"
 [project]
 name = "racing-core"
 version = "0.1.0"
-description = "Per-step physics of racing-rl, car, lidar and track queries."
+description = "Per-step physics of learn-for-speed, car, lidar and track queries."
 requires-python = ">=3.12,<3.13"
 dependencies = ["numpy>=1.26"]
 

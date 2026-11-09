@@ -1,9 +1,9 @@
-# racing-rl
+# learn-for-speed
 
 2D top-down racing car. PPO (stable-baselines3) learns to drive procedurally generated tracks; judged on held-out tracks vs baselines (random, pure pursuit) and ablations. School project, 3 students, ~6 weeks. Python 3.12 only, uv, Linux. Deadline/format unknown: keep a demo-ready state.
 
 ## Commands (use make, never raw pip/python)
-- `make setup` env; `make play` drive by keyboard; `make run CMD="python x.py"`; `make test | lint | format | rust | bench | tb | dashboard | clean`
+- `make setup` env; `make play` drive by keyboard; `make run CMD="python x.py"`; `make train CONFIG=tiny SEED=0`; `make eval POLICY=pure_pursuit` (val split); `make test | lint | format | rust | bench | tb | dashboard | clean`
 - Docker (headless, outputs bind-mounted): `make docker-build | docker-run CMD=".." | docker-shell | docker-test | docker-play | docker-tb`
 
 ## Layout

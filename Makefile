@@ -1,11 +1,16 @@
 .DEFAULT_GOAL := help
 SHELL := /bin/bash
 
-IMAGE ?= racing-rl
+IMAGE ?= learn-for-speed
 CMD   ?= python --version
 SEED  ?= 1000
 DIFFICULTY ?= 0.5
 RUNS  ?=
+CONFIG ?= tiny
+POLICY ?= pure_pursuit
+MODEL ?=
+SPLIT ?= val
+N     ?= 20
 
 # rustup installs here, and a new login is needed before the shell knows about it
 export PATH := $(HOME)/.cargo/bin:$(PATH)
@@ -54,6 +59,16 @@ format: ## Auto-format Python and Rust
 .PHONY: bench
 bench: ## Print env steps per second and track generation time
 	uv run python -m sim.bench
+
+.PHONY: train
+train: SEED = 0
+train: ## Train PPO from configs/CONFIG.yaml into runs/, e.g. make train CONFIG=mvp SEED=1
+	uv run python -m learning.train --config configs/$(CONFIG).yaml --seed $(SEED)
+
+.PHONY: eval
+eval: ## Evaluate a policy on validation tracks, e.g. make eval POLICY=ppo MODEL=runs/mvp_s0/best_model.zip
+	uv run python -m evaluation.evaluate --policy $(POLICY) $(if $(MODEL),--model $(MODEL)) \
+		--split $(SPLIT) --n $(N) --difficulty $(DIFFICULTY)
 
 .PHONY: tb
 tb: ## TensorBoard on http://localhost:6006 (reads ./runs)
