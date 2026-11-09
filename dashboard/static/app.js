@@ -1,4 +1,4 @@
-// racing-rl dashboard. Reads window.DATA written by dashboard/build.py, no server needed.
+// learn-for-speed dashboard. Reads window.DATA written by dashboard/build.py, no server needed.
 "use strict";
 
 const D = window.DATA;
@@ -19,8 +19,6 @@ const ICONS = {
   moon: '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>',
   monitor: '<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/>',
   chevron: '<path d="m15 18-6-6 6-6"/>',
-  bell: '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8"/><path d="M10 20a2 2 0 0 0 4 0"/>',
-  plus: '<path d="M12 5v14M5 12h14"/>',
   menu: '<path d="M4 7h16M4 12h16M4 17h10"/>',
   target: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>',
   eye: '<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
@@ -102,28 +100,6 @@ function runColor(name) {
 function alpha(hex, a) {
   const n = parseInt(hex.slice(1), 16);
   return `rgba(${n >> 16}, ${(n >> 8) & 255}, ${n & 255}, ${a})`;
-}
-
-function toast(text) {
-  const el = $("#toast");
-  el.textContent = text;
-  el.classList.add("show");
-  clearTimeout(toast.timer);
-  toast.timer = setTimeout(() => el.classList.remove("show"), 1800);
-}
-
-function copy(text) {
-  const done = () => toast("Copied to clipboard");
-  if (navigator.clipboard && window.isSecureContext) {
-    navigator.clipboard.writeText(text).then(done);
-    return;
-  }
-  const area = Object.assign(document.createElement("textarea"), { value: text });
-  document.body.append(area);
-  area.select();
-  document.execCommand("copy");
-  area.remove();
-  done();
 }
 
 function visibleRuns() {
@@ -763,7 +739,7 @@ function drawSim() {
     const track = D.tracks[ep.seed];
     const f = ep.frames;
     const n = f.x.length;
-    const i = Math.min(Math.floor(simState.t / ep.dt), n - 1);
+    const i = Math.max(0, Math.min(Math.floor(simState.t / ep.dt), n - 1));
     const view = follow ? followView(f.x[i], f.y[i], w, h, 4) : fitView(track, w, h);
     drawTrack(ctx, track, view, w, h);
     if (trail) drawTrail(ctx, f, i, view);
@@ -786,7 +762,9 @@ function setPlaying(on) {
 
 function tick(ts) {
   if (!simState.playing || state.view !== "simulation") return;
-  simState.t = Math.min(simState.t + ((ts - simState.lastTs) / 1000) * simState.speed, simState.maxT);
+  // The first frame timestamp can be older than performance.now() in setPlaying, so never step back
+  const dt = Math.max(0, ts - simState.lastTs) / 1000;
+  simState.t = Math.min(simState.t + dt * simState.speed, simState.maxT);
   simState.lastTs = ts;
   drawSim();
   if (simState.t >= simState.maxT) setPlaying(false);
@@ -978,14 +956,6 @@ function bindShell() {
     state.search = e.target.value;
     renderRunList();
     if (state.view === "training" || state.view === "overview") RENDER[state.view]();
-  });
-  $("#new-run").addEventListener("click", () => {
-    const config = D.meta.selected.length ? configOf(D.meta.selected[0].slice(4)) : "tiny";
-    copy(`uv run python -m learning.train --config configs/${config}.yaml --seed 0`);
-  });
-  $("#copy-eval").addEventListener("click", () => {
-    const run = D.meta.selected.length ? D.meta.selected[0].slice(4) : "<run>";
-    copy(`uv run python -m evaluation.evaluate --policy ppo --model runs/${run}/best_model.zip --split val --n 20 --difficulty ${D.meta.difficulty}`);
   });
   $("#play").addEventListener("click", () => setPlaying(!simState.playing));
   $("#scrub").addEventListener("input", (e) => {

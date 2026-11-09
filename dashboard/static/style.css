@@ -188,8 +188,6 @@ select { border: 1px solid var(--line); background: var(--card); border-radius: 
 .legend { display: flex; justify-content: space-between; color: var(--muted); font-size: 11px; margin-top: 6px; }
 #phys-map { width: 100%; display: block; border-radius: 8px; background: var(--grass); }
 .empty { color: var(--muted); padding: 30px; text-align: center; }
-.toast { position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--dark); color: var(--dark-text); padding: 10px 16px; border-radius: 10px; opacity: 0; transition: 0.2s; pointer-events: none; }
-.toast.show { opacity: 1; transform: translateX(-50%); }
 
 @media (max-width: 1100px) {
   .grid-main, .hero { grid-template-columns: 1fr; }
