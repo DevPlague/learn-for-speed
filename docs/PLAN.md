@@ -82,8 +82,8 @@ Probabilities are judgement-based estimates, not measurements. Ending with nothi
 ## Experiment log (test seeds only)
 | ID | Config | Seeds | Change vs reference | Test success / lap [s] | Conclusion |
 |---|---|---|---|---|---|
-| E00 | baselines | - | random, pure pursuit | | |
-| E01 | mvp | 1 | fixed gentle tracks, no curriculum | | |
+| E00 | baselines | - | random, pure pursuit | val 1000 to 1049 d0, pure pursuit 100% / 29.5, random 0% (100% stuck) | env is solvable, Gate 1 reference. Test pending |
+| E01 | mvp | 0, 1, 2 | fixed gentle tracks, no curriculum | val 1000 to 1049 d0, 61% ± 44 / 24.1 (s0 100%, s1 0%, s2 84%) | Gate 1 passes. MVP 70% not met on the mean because seed 1 never leaves the start (100% stuck). Seeds 1020 to 1049, not used for model selection, give the same picture. Test pending |
 | E02 | target | 3 | procedural + curriculum (reference) | | |
 
 ## Decisions
@@ -99,7 +99,7 @@ Probabilities are judgement-based estimates, not measurements. Ending with nothi
 - 2026-11-02 D09 Code in subpackages by role: sim/ (S1), learning/ (S2), evaluation/ (S3). Why: clear ownership with three people in parallel.
 - 2026-11-02 D10 `.claude/` stays gitignored. Why: each student has personal skills. Shared knowledge lives in CLAUDE.md, SPEC.md and PLAN.md.
 - 2026-11-02 D11 No strict code style beyond ruff. Why: keep code simple, avoid friction.
-- 2026-11-05 D12 `evaluate(policy, seeds, difficulty, env=None)` takes an optional env and rejects training seeds. Why: pure pursuit reads the same env it drives, tests pass a mock env, and no training track can leak into results.
+- 2026-11-05 D29 `evaluate(policy, seeds, difficulty, env=None)` takes an optional env and rejects training seeds. Why: pure pursuit reads the same env it drives, tests pass a mock env, and no training track can leak into results.
 - 2026-11-02 D12 Physics core in Rust, one call per step, built with a separate `make rust` target. Replaces the NumPy physics part of D02. Why: simulation speed, S1 chooses the binding.
 - 2026-11-02 D13 Contracts are plain functions and NumPy arrays, config is one YAML per experiment, PRs need one review. Why: simplest option for a small team.
 - 2026-11-02 D14 Sim is pure NumPy first, Rust only after profiling, binding PyO3 with maturin. Refines D12. Why: unblocks S2 and S3 for Gate 1 and Rust is not installed yet.
