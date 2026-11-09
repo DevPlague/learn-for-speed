@@ -4,14 +4,18 @@ from dataclasses import dataclass
 
 import gymnasium as gym
 
+IDLE_SPEED = 1.0  # m/s, slower than this in either direction counts as standing still
+
 
 @dataclass(frozen=True)
 class RewardWeights:
     progress: float = 10.0  # per lap of progress along the centerline
     time: float = 0.01
-    jitter: float = 0.05  # per unit of steering change between steps
+    jitter: float = 0.01  # per unit of steering change between steps
     grass: float = 0.05  # per step on grass
+    idle: float = 0.03  # per step below IDLE_SPEED, costs more than reversing at full speed
     off_road: float = 5.0  # once, when the attempt fails off road
+    stuck: float = 10.0  # once, when the attempt fails stuck, worse than crashing
     lap: float = 5.0  # once, when the lap is done
 
 
@@ -39,7 +43,7 @@ class RaceReward(gym.Wrapper):
         self._progress, self._steer = progress, steer
 
         if terminated or truncated:
-            info["is_success"] = info["lap_done"]  # read by EvalCallback as success rate
+            info["is_success"] = info["lap_done"]  # SB3 logs it as rollout/success_rate
         return obs, reward, terminated, truncated, info
 
     def _reward(self, dprogress, dsteer, info):
@@ -49,6 +53,8 @@ class RaceReward(gym.Wrapper):
             - w.time
             - w.jitter * dsteer
             - w.grass * info["on_grass"]
+            - w.idle * (abs(info["speed"]) < IDLE_SPEED)
             - w.off_road * info["off_road"]
+            - w.stuck * info["stuck"]
             + w.lap * info["lap_done"]
         )

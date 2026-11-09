@@ -40,16 +40,11 @@ If the deadline is earlier, cut from the bottom: Stretch, then ablations, then s
 - Done = works via `make`, tests/lint pass, logged here, someone else looked at it.
 
 ## Tasks
-**Doing:** T07 (S2)  |  **Review:** T17 (S1)
+**Doing:** T08 (S2)  |  **Review:** none
 
 **Backlog**
-- [ ] T01 Everyone runs `make setup`; first person commits `uv.lock`; GitHub repo + protected `main`
-- [ ] T17 (S1) Rust core crate, binding choice, `make rust` target and Dockerfile step. Profile a NumPy version first
-- [ ] T06 (S3) Baselines: random and pure pursuit; pure pursuit must lap tracks (Gate 1)
-- [ ] T07 (S2) Training script: SB3 PPO, parallel envs, config file per run, validation tracks, checkpoints, TensorBoard
 - [ ] T08 (S2) First MVP run (fixed gentle tracks); watch it; fix env/reward bugs
 - [ ] T09 (S2) Curriculum + procedural tracks; check it reaches full difficulty
-- [ ] T10 (S3) Evaluation script (test seeds, table, JSON, mean +- std over seeds)
 - [ ] T11 (S2) Final runs: 3 seeds of the target config
 - [ ] T12 (S2) Ablations (3 seeds each): no lookahead (obsolete since D17, S2 to pick a replacement), no curriculum, one of {obs normalization, no smoothness penalty, steer-only}
 - [ ] T13 (S3) Learning-curve figure; failure analysis on 3 test tracks
@@ -61,6 +56,11 @@ If the deadline is earlier, cut from the bottom: Stretch, then ablations, then s
 - [x] T02 Code layout in CLAUDE.md and docs/SPEC.md (2026-11-02)
 - [x] T03 (S1) Env: car, spline tracks with difficulty, rendering, keyboard play (2026-11-05)
 - [x] T04 (S1) Env: lidar observation, placeholder reward, termination (2026-11-05)
+- [x] T01 Everyone runs `make setup`; first person commits `uv.lock`; GitHub repo + protected `main` (2026-11-05)
+- [x] T17 (S1) Rust core crate, binding choice, `make rust` target and Dockerfile step. Profile a NumPy version first (2026-11-05)
+- [x] T06 (S3) Baselines: random and pure pursuit; pure pursuit must lap tracks (Gate 1) (2026-11-05)
+- [x] T10 (S3) Evaluation script (test seeds, table, JSON, mean +- std over seeds) (2026-11-05)
+- [x] T07 (S2) Training script: SB3 PPO, parallel envs, config file per run, validation tracks, checkpoints, TensorBoard (2026-11-06)
 - [x] T05 (S1) Tests: geometry, physics, `check_env`, reproducibility with seeds. S3 may add more (2026-11-05)
 
 ## Risks
@@ -113,6 +113,9 @@ Probabilities are judgement-based estimates, not measurements. Ending with nothi
 - 2026-11-05 D22 Three physics fixes after the exact port. Body-frame update instead of rotating the velocity, so a gripping corner loses only drag. Speed clipped again after that update. Slip observation scale raised from 10 to 20 m/s, since a spin reaches 19 m/s. Why: found by measurement, and the last one changes the observation.
 - 2026-11-05 D23 Physics guide in docs/PHYSICS.md, with its numbers checked by tests/test_sim_physics.py. Why: everyone must be able to explain the physics in the oral defense.
 - 2026-11-05 D24 The training reward is a gymnasium wrapper in `learning/` (`RaceReward`) with weights from the config, and `sim/` keeps its placeholder. The wrapper reports lap success as `is_success` so SB3 logs the validation lap rate. Policies load with `load_policy` in `learning/policy.py`. Why: S1 and S2 never edit the same file, and S3 can evaluate any saved model through one function.
+- 2026-11-06 D25 MVP config uses jitter weight 0.1 and learning rate 0.0005. The 200k probe with jitter 0.05 tended to stand still, so the validation curve is watched for that. Why: the student chose smoother steering for the MVP.
+- 2026-11-06 D26 Validation during training calls `evaluation.evaluate` on the first `eval.tracks` validation seeds and appends a row to `val_curve.csv` with the metrics from SPEC.md. `best_model.zip` is the highest lap rate, then mean progress. Replaces the reward based EvalCallback and its `evaluations.npz`. Why: training, validation and test share one metric definition, as docs/FOR_S2.md proposed.
+- 2026-11-06 D27 Reward gains `idle` 0.03 per step below 1 m/s and `stuck` 10 once, more than `off_road` 5. MVP uses jitter 0.01 and learning rate 0.0003. Refines D24 and replaces the MVP values of D25. The 2M step MVP with jitter 0.1 stood still on every validation track, its episodes all ended stuck after 10 s with reward about minus 2, because giving up cost less than trying and crashing. Now standing still costs more than reversing at full speed, and getting stuck costs more than crashing. Why: standing still must never be the best plan.
 
 ## Report skeleton
 1. Problem and why RL  2. Environment (physics, tracks, sensors, reward)  3. Method (PPO, curriculum, hyperparameters)  4. Experiments (baselines, held-out results, ablations)  5. Failure analysis  6. Conclusions and limits.

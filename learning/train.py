@@ -1,25 +1,25 @@
 """PPO training from one YAML config. Run with
 python -m learning.train --config configs/tiny.yaml --seed 0
 Outputs go to runs/<config>_s<seed>/ (config.yaml, model.zip, best_model.zip, checkpoints/,
-progress.csv and TensorBoard events).
+val_curve.csv, progress.csv and TensorBoard events).
 """
 
 import argparse
+import csv
 from functools import partial
 from pathlib import Path
 
-import numpy as np
 import yaml
 from stable_baselines3 import PPO
-from stable_baselines3.common.callbacks import CheckpointCallback, EvalCallback
+from stable_baselines3.common.callbacks import BaseCallback, CheckpointCallback
 from stable_baselines3.common.logger import configure
 from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv, VecNormalize
 
+from evaluation.evaluate import METRICS, evaluate, split_seeds
 from learning.reward import RaceReward, RewardWeights
 from sim.env import RacingEnv
 
-VAL_SEED_MIN = 1000
 RUNS_DIR = Path("runs")
 
 
@@ -42,30 +42,53 @@ def make_train_env(cfg):
     return VecNormalize(env, norm_obs=False, norm_reward=True, gamma=gamma)
 
 
-def make_val_env(cfg):
-    """One sub-env per validation track, so each evaluation drives every track once."""
-    weights = RewardWeights(**cfg["reward"])
-    seeds = range(VAL_SEED_MIN, VAL_SEED_MIN + cfg["eval"]["tracks"])
-    env = DummyVecEnv([partial(make_env, weights, seed, cfg["difficulty"]) for seed in seeds])
+class ValCurveCallback(BaseCallback):
+    """Drives the validation tracks with evaluation.evaluate, so training and S3 share metrics.
 
-    return VecNormalize(env, training=False, norm_obs=False, norm_reward=False)
+    Appends one row per check to val_curve.csv and keeps best_model.zip by lap rate,
+    then by mean progress.
+    """
+
+    def __init__(self, cfg, run_dir):
+        super().__init__()
+        self.freq = cfg["eval"]["freq"]
+        self.seeds = split_seeds("val", cfg["eval"]["tracks"])
+        self.difficulty = cfg["difficulty"]
+        self.run_dir = run_dir
+        self.best = (-1.0, -1.0)
+        self.last = None
+        self.next_check = self.freq
+
+    def _on_training_start(self):
+        with open(self.run_dir / "val_curve.csv", "w", newline="") as f:
+            csv.writer(f).writerow(["timesteps", *METRICS])
+
+    def _on_step(self):
+        # num_timesteps grows by n_envs per call, so compare against a threshold
+        if self.num_timesteps >= self.next_check:
+            self.next_check += self.freq
+            self.validate()
+        return True
+
+    def validate(self):
+        model = self.model
+        row = evaluate(
+            lambda obs: model.predict(obs, deterministic=True)[0], self.seeds, self.difficulty
+        )
+        with open(self.run_dir / "val_curve.csv", "a", newline="") as f:
+            csv.writer(f).writerow([self.num_timesteps, *(row[k] for k in METRICS)])
+        score = (row["lap_success_rate"], row["mean_progress"])
+        if score > self.best:
+            self.best = score
+            model.save(self.run_dir / "best_model")
+        self.last = row
 
 
 def make_callbacks(cfg, run_dir):
-    # SB3 counts callback frequencies in vec env steps, each one is n_envs env steps
-    def per_env(steps):
-        return max(steps // cfg["n_envs"], 1)
-
-    checkpoint = CheckpointCallback(per_env(cfg["checkpoint_freq"]), str(run_dir / "checkpoints"))
-    evaluation = EvalCallback(
-        make_val_env(cfg),
-        n_eval_episodes=cfg["eval"]["tracks"],
-        eval_freq=per_env(cfg["eval"]["freq"]),
-        best_model_save_path=str(run_dir),
-        log_path=str(run_dir),
-        deterministic=True,
-    )
-    return checkpoint, evaluation
+    # SB3 counts the checkpoint frequency in vec env steps, each one is n_envs env steps
+    save_freq = max(cfg["checkpoint_freq"] // cfg["n_envs"], 1)
+    checkpoint = CheckpointCallback(save_freq, str(run_dir / "checkpoints"))
+    return checkpoint, ValCurveCallback(cfg, run_dir)
 
 
 def train(cfg, seed, runs_dir=RUNS_DIR):
@@ -77,21 +100,22 @@ def train(cfg, seed, runs_dir=RUNS_DIR):
     model = PPO("MlpPolicy", env, seed=seed, device="cpu", **cfg["ppo"])
     # progress.csv gives S3 the learning curves without reading TensorBoard files
     model.set_logger(configure(str(run_dir), ["csv", "tensorboard"]))
-    checkpoint, evaluation = make_callbacks(cfg, run_dir)
-    model.learn(cfg["total_timesteps"], callback=[checkpoint, evaluation])
+    checkpoint, validation = make_callbacks(cfg, run_dir)
+    model.learn(cfg["total_timesteps"], callback=[checkpoint, validation])
     model.save(run_dir / "model")
     env.close()
-    evaluation.eval_env.close()
-    print_summary(run_dir, evaluation)
+    print_summary(run_dir, validation)
     return run_dir
 
 
-def print_summary(run_dir, evaluation):
+def print_summary(run_dir, validation):
     print(f"Run saved in {run_dir}")
-    if evaluation.evaluations_successes:
-        laps = np.mean(evaluation.evaluations_successes[-1])
+    if validation.last:
+        laps, progress = validation.best
         print(
-            f"Last validation lap rate {laps:.0%}, best mean reward {evaluation.best_mean_reward:.1f}"
+            f"Last validation lap rate {validation.last['lap_success_rate']:.0%}, "
+            f"progress {validation.last['mean_progress']:.2f}. "
+            f"Best lap rate {laps:.0%}, progress {progress:.2f}"
         )
 
 

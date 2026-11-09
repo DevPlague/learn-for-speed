@@ -58,9 +58,9 @@ The observation size is exported as `OBS_DIM` in `sim/env.py` so learning and ev
 ### Learning
 | Item | Contract |
 |---|---|
-| `RaceReward(env, weights)` | Gymnasium wrapper in `learning/reward.py`. Reward is progress (laps) times `progress`, minus `time` per step, minus `jitter` times the steering change, minus `grass` per step on grass, minus `off_road` once, plus `lap` once. Weights come from the `reward` block of the config. Adds `is_success` (lap done) to `info` at the end of each episode |
-| Training | `python -m learning.train --config configs/<name>.yaml --seed <n>` writes `runs/<name>_s<n>/` with `config.yaml`, `model.zip` (final model), `best_model.zip`, `checkpoints/`, `evaluations.npz`, `progress.csv` (SB3 logger, one row per PPO update) and TensorBoard events |
-| Validation | Every `eval.freq` steps the policy drives each of the first `eval.tracks` validation seeds (from 1000) once with deterministic actions. `best_model.zip` is the best mean reward on them |
+| `RaceReward(env, weights)` | Gymnasium wrapper in `learning/reward.py`. Reward is progress (laps) times `progress`, minus `time` per step, minus `jitter` times the steering change, minus `grass` per step on grass, minus `idle` per step slower than 1 m/s in either direction, minus `off_road` once, minus `stuck` once, plus `lap` once. Weights come from the `reward` block of the config. Adds `is_success` (lap done) to `info` at the end of each episode |
+| Training | `python -m learning.train --config configs/<name>.yaml --seed <n>` writes `runs/<name>_s<n>/` with `config.yaml`, `model.zip` (final model), `best_model.zip`, `checkpoints/`, `val_curve.csv`, `progress.csv` (SB3 logger, one row per PPO update) and TensorBoard events |
+| Validation | Every `eval.freq` steps `evaluate` from `evaluation/` drives the first `eval.tracks` validation seeds (from 1000) once with deterministic actions and appends one row to `val_curve.csv` (`timesteps` plus the evaluation metrics). `best_model.zip` has the highest lap success rate, then the highest mean progress |
 | `load_policy(path)` | In `learning/policy.py`. Returns a policy callable for any saved model. No normalization stats are needed because only the reward is normalized |
 
 ### Rust core

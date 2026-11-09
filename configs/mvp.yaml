@@ -8,9 +8,11 @@ eval:
 reward:
   progress: 10.0
   time: 0.01
-  jitter: 0.05
+  jitter: 0.01
   grass: 0.05
+  idle: 0.03
   off_road: 5.0
+  stuck: 10.0
   lap: 5.0
 ppo:
   learning_rate: 0.0003
