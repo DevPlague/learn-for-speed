@@ -83,7 +83,7 @@ Probabilities are judgement-based estimates, not measurements. Ending with nothi
 | ID | Config | Seeds | Change vs reference | Test success / lap [s] | Conclusion |
 |---|---|---|---|---|---|
 | E00 | baselines | - | random, pure pursuit | val 1000 to 1049 d0, pure pursuit 100% / 29.5, random 0% (100% stuck) | env is solvable, Gate 1 reference. Test pending |
-| E01 | mvp | 0, 1, 2 | fixed gentle tracks, no curriculum | val 1000 to 1049 d0, 61% ± 44 / 24.1 (s0 100%, s1 0%, s2 84%) | Gate 1 passes. MVP 70% not met on the mean because seed 1 never leaves the start (100% stuck). Seeds 1020 to 1049, not used for model selection, give the same picture. Test pending |
+| E01 | mvp | 0, 1, 2 | fixed gentle tracks, no curriculum | val 1000 to 1049 d0, 61% ± 44 / 24.1 (s0 100%, s1 0%, s2 84%) | Gate 1 passes. MVP 70% not met on the mean because seed 1 never leaves the start (100% stuck). Seeds 1020 to 1049, not used for model selection, give the same picture. At difficulty 1 laps fall to 49% ± 35. Test pending |
 | E02 | target | 3 | procedural + curriculum (reference) | | |
 
 ## Decisions
@@ -100,6 +100,7 @@ Probabilities are judgement-based estimates, not measurements. Ending with nothi
 - 2026-11-02 D10 `.claude/` stays gitignored. Why: each student has personal skills. Shared knowledge lives in CLAUDE.md, SPEC.md and PLAN.md.
 - 2026-11-02 D11 No strict code style beyond ruff. Why: keep code simple, avoid friction.
 - 2026-11-05 D29 `evaluate(policy, seeds, difficulty, env=None)` takes an optional env and rejects training seeds. Why: pure pursuit reads the same env it drives, tests pass a mock env, and no training track can leak into results.
+- 2026-11-10 D30 `evaluate` also returns per-track `episodes` and `eval.json` stores them per model. New `evaluation/stats.py` gives 95% intervals (Wilson, bootstrap over tracks, t over seeds) and paired tests (exact McNemar on laps, Wilcoxon on progress and lap time, Friedman and Holm for several policies). The final test split uses 200 tracks. Why: Tema 8 asks for intervals and tests in every model comparison, policies share tracks so tests are paired, 200 tracks narrow the lap rate interval to about 0.07. Details in docs/EVALUATION_STATISTICS.md.
 - 2026-11-02 D12 Physics core in Rust, one call per step, built with a separate `make rust` target. Replaces the NumPy physics part of D02. Why: simulation speed, S1 chooses the binding.
 - 2026-11-02 D13 Contracts are plain functions and NumPy arrays, config is one YAML per experiment, PRs need one review. Why: simplest option for a small team.
 - 2026-11-02 D14 Sim is pure NumPy first, Rust only after profiling, binding PyO3 with maturin. Refines D12. Why: unblocks S2 and S3 for Gate 1 and Rust is not installed yet.

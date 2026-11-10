@@ -85,7 +85,7 @@ make run CMD="python -m evaluation.evaluate --policy ppo --model runs/a_s0/model
 Final results only, once, at the end of W4
 
 ```bash
-make run CMD="python -m evaluation.evaluate --policy ppo --model runs/a_s0/model.zip runs/a_s1/model.zip runs/a_s2/model.zip --split test --n 100 --out runs/final_ppo"
+make run CMD="python -m evaluation.evaluate --policy ppo --model runs/a_s0/model.zip runs/a_s1/model.zip runs/a_s2/model.zip --split test --n 200 --out runs/final_ppo"
 ```
 
 Options are listed in the README. Every run writes `runs/<out>/eval.json` with the arguments, the seeds and the metrics, and prints a Markdown table to paste into PLAN.md.
@@ -125,10 +125,21 @@ make run CMD="python -m evaluation.demo --policies ppo --model runs/mvp_s1/best_
 
 Pick the failure seed from the `failures` command above.
 
+## Confidence intervals and tests
+
+`evaluation/stats.py` reads two or more `eval.json` files run on the same tracks and prints each policy with a 95% interval, then paired tests between every pair with Holm corrected p-values, and a Friedman test when there are three or more. The theory and the choice of each test are in docs/EVALUATION_STATISTICS.md.
+
+```bash
+make run CMD="python -m evaluation.stats ppo=runs/eval_ppo_val_d0/eval.json pure_pursuit=runs/eval_pure_pursuit_val_d0/eval.json random=runs/eval_random_val_d0/eval.json --out runs/stats_val_d0.md"
+```
+
+Files written before this change have no per-track episodes, rerun `evaluate` for them.
+
 ## Checklist before reporting a number
 
 - Same `--n`, `--split` and `--difficulty` for every policy in one table
 - Validation while developing, test only for the final table
 - Three training seeds for PPO and ablations
 - Off-track and stuck rates read, not only success
+- 95% interval and paired test p-values from `evaluation.stats` next to every comparison
 - Result logged in the PLAN.md experiment table

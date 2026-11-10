@@ -71,9 +71,19 @@ def evaluate(policy, seeds, difficulty, env=None):
     env = RacingEnv(difficulty=difficulty) if env is None else env
     env.difficulty = difficulty
     laps, offs, stucks, lap_times, speeds, progress = [], [], [], [], [], []
+    episodes = []
     for seed in seeds:
         ep = run_episode(policy, seed, env)
         info = ep["info"]
+        lap_time = float(info["lap_time"]) if info["lap_done"] else None
+        episodes.append(
+            {
+                "seed": seed,
+                "outcome": ep["outcome"],
+                "progress": float(info["progress"]),
+                "lap_time": lap_time,
+            }
+        )
         laps.append(info["lap_done"])
         offs.append(info["off_road"])
         stucks.append(info["stuck"])
@@ -89,6 +99,7 @@ def evaluate(policy, seeds, difficulty, env=None):
         "mean_lap_time": float(np.mean(lap_times)) if lap_times else None,
         "mean_speed": float(np.mean(speeds)),
         "mean_progress": float(np.mean(progress)),
+        "episodes": episodes,
     }
 
 
@@ -152,10 +163,11 @@ def main():
         env = RacingEnv(difficulty=args.difficulty)
         results.append(evaluate(make_policy(args.policy, env, model), seeds, args.difficulty, env))
     row = aggregate(results) if args.policy == "ppo" else results[0]
+    episodes = [r.pop("episodes") for r in results]  # one list per model, paired by track seed
 
     out = Path(args.out or f"runs/eval_{args.policy}_{args.split}")
     out.mkdir(parents=True, exist_ok=True)
-    summary = {"args": vars(args), "seeds": seeds, "metrics": row}
+    summary = {"args": vars(args), "seeds": seeds, "metrics": row, "episodes": episodes}
     (out / "eval.json").write_text(json.dumps(summary, indent=2))
     print(to_markdown({args.policy: row}))
     print(f"\nsaved {out / 'eval.json'}")
