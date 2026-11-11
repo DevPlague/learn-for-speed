@@ -7,12 +7,15 @@ Example
 import argparse
 import csv
 import json
+import math
+import re
 import shutil
 from pathlib import Path
 
 import yaml
 
 from dashboard.record import record_episode, track_geometry
+from evaluation import stats
 from evaluation.evaluate import evaluate, make_policy, split_seeds
 from sim import car, lidar
 from sim.env import RacingEnv
@@ -79,32 +82,72 @@ def read_test_results(runs_dir):
     return results
 
 
-def default_difficulty(runs, names):
-    """Difficulty the first selected run trained on, so it is judged on its own level."""
-    configs = {run["name"]: run["config"] for run in runs}
-    return float(configs[names[0]].get("difficulty", 0.0)) if names else 0.0
+def finite(value):
+    """Plain JSON values, NaN becomes None and tuples become lists."""
+    if isinstance(value, dict):
+        return {k: finite(v) for k, v in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [finite(v) for v in value]
+    return None if isinstance(value, float) and math.isnan(value) else value
 
 
-def build(runs_dir, names, difficulty, n_eval, n_replay, out):
+def level_stats(episodes):
+    """Intervals and paired tests from evaluation.stats for one difficulty.
+
+    Several seeds of one config are also pooled into `pooled:<config>`, which adds the t interval
+    over seeds. Tests compare pooled configs, single runs and baselines, never a seed with its pool.
+    """
+    evals = {key: {"episodes": [eps]} for key, eps in episodes.items()}
+    configs = {}
+    for key in episodes:
+        if key.startswith("ppo:"):
+            configs.setdefault(re.sub(r"_s\d+$", "", key[4:]), []).append(key)
+    units = dict(evals)
+    for config, keys in configs.items():
+        if len(keys) > 1:
+            evals[f"pooled:{config}"] = units[f"pooled:{config}"] = {
+                "episodes": [episodes[k] for k in keys]
+            }
+            for k in keys:
+                units.pop(k)
+    out = {"intervals": {key: stats.summarize(e) for key, e in evals.items()}}
+    try:
+        out["tests"] = stats.pairwise_tests(units)
+    except ValueError as err:  # pooled configs with different seed counts cannot be paired
+        out["tests"], out["note"] = [], str(err)
+    out["friedman"] = stats.friedman(units) if len(units) >= 3 else None
+    return finite(out)
+
+
+def build(runs_dir, names, difficulties, n_eval, n_replay, out):
     runs_dir, out = Path(runs_dir), Path(out)
     runs = [read_run(p.parent) for p in sorted(runs_dir.glob("*/config.yaml"))]
-    if difficulty is None:
-        difficulty = default_difficulty(runs, names)
-    env = RacingEnv(difficulty=difficulty)
+    env = RacingEnv(difficulty=difficulties[0])
     policies = make_policies(runs_dir, names, env)
 
-    validation, replays = {}, {}
-    replay_seeds = split_seeds("val", n_replay)
-    for label, policy in policies.items():
-        print(f"evaluating {label}")
-        validation[label] = evaluate(policy, split_seeds("val", n_eval), difficulty, env=env)
-        replays[label] = [record_episode(policy, s, difficulty, env=env) for s in replay_seeds]
+    levels = []
+    for difficulty in difficulties:
+        validation = {}
+        for label, policy in policies.items():
+            print(f"evaluating {label} at difficulty {difficulty}")
+            validation[label] = evaluate(policy, split_seeds("val", n_eval), difficulty, env=env)
+        episodes = {label: m.pop("episodes") for label, m in validation.items()}
+        levels.append(
+            {"difficulty": difficulty, "validation": validation, "stats": level_stats(episodes)}
+        )
 
+    difficulty = difficulties[0]
+    replay_seeds = split_seeds("val", n_replay)
+    replays = {
+        label: [record_episode(policy, s, difficulty, env=env) for s in replay_seeds]
+        for label, policy in policies.items()
+    }
     tracks = {seed: track_geometry(generate_track(seed, difficulty)) for seed in replay_seeds}
 
     data = {
         "meta": {
             "difficulty": difficulty,
+            "difficulties": difficulties,
             "eval_tracks": n_eval,
             "lidar_angles": [round(float(a), 4) for a in lidar.ANGLES],
             "lidar_range": float(lidar.RANGE),
@@ -112,7 +155,8 @@ def build(runs_dir, names, difficulty, n_eval, n_replay, out):
             "selected": [f"ppo:{name}" for name in names],
         },
         "runs": runs,
-        "validation": validation,
+        "validation": levels[0]["validation"],
+        "levels": levels,
         "test": read_test_results(runs_dir),
         "tracks": tracks,
         "replays": replays,
@@ -129,13 +173,19 @@ def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--runs", nargs="*", default=[], help="run folders to evaluate and replay")
     p.add_argument("--runs-dir", default="runs")
-    p.add_argument("--difficulty", type=float, default=None, help="default from the first run")
+    p.add_argument(
+        "--difficulties",
+        type=float,
+        nargs="+",
+        default=[0.0, 0.5, 1.0],
+        help="validation levels, replays use the first one",
+    )
     p.add_argument("--eval-tracks", type=int, default=20)
     p.add_argument("--replay-tracks", type=int, default=6)
     p.add_argument("--out", default="runs/dashboard")
     args = p.parse_args()
     index = build(
-        args.runs_dir, args.runs, args.difficulty, args.eval_tracks, args.replay_tracks, args.out
+        args.runs_dir, args.runs, args.difficulties, args.eval_tracks, args.replay_tracks, args.out
     )
     print(f"dashboard ready, open {index.resolve()}")
 

@@ -37,6 +37,7 @@ const VIEWS = [
   ["overview", "Overview", "home"],
   ["training", "Training", "chart"],
   ["validation", "Validation", "check"],
+  ["statistics", "Statistics", "target"],
   ["test", "Test", "lock"],
   ["simulation", "Simulation", "play"],
   ["physics", "Physics", "gauge"],
@@ -58,7 +59,7 @@ const METRIC_LABELS = {
   mean_progress: "lap driven",
 };
 
-const state = { view: "overview", group: "all", hidden: new Set(), charts: {}, search: "" };
+const state = { view: "overview", group: "all", hidden: new Set(), charts: {}, search: "", level: 0 };
 
 // ---------- small helpers ----------
 const icon = (name) =>
@@ -72,6 +73,7 @@ const configOf = (name) => name.replace(/_s\d+$/, "");
 const BASELINE_NAMES = { pure_pursuit: "Pure pursuit (baseline)", random: "Random (baseline)" };
 function policyName(key) {
   if (BASELINE_NAMES[key]) return BASELINE_NAMES[key];
+  if (key.startsWith("pooled:")) return `PPO ${key.slice(7)} (all seeds)`;
   const run = key.replace(/^ppo:/, "");
   const match = run.match(/^(.*)_s(\d+)$/);
   return match ? `PPO ${match[1]} (seed ${match[2]})` : `PPO ${run}`;
@@ -89,6 +91,7 @@ function fillIcons(root = document) {
 function policyColor(key) {
   if (FIXED_COLORS[key]) return FIXED_COLORS[key];
   const ppo = Object.keys(D.validation).filter((k) => k.startsWith("ppo:"));
+  if (key.startsWith("pooled:")) key = ppo.find((k) => configOf(k.slice(4)) === key.slice(7)) || key;
   return RUN_PALETTE[Math.max(ppo.indexOf(key), 0) % RUN_PALETTE.length];
 }
 
@@ -107,6 +110,25 @@ function visibleRuns() {
     (r) =>
       (state.group === "all" || groupOf(r.name) === state.group) &&
       r.name.toLowerCase().includes(state.search.toLowerCase())
+  );
+}
+
+// validation and statistics of the difficulty picked in the level tabs
+function level() {
+  if (!D.levels) return { difficulty: D.meta.difficulty, validation: D.validation, stats: null };
+  return D.levels[Math.min(state.level, D.levels.length - 1)];
+}
+
+function levelTabs(el) {
+  const levels = D.levels || [];
+  el.innerHTML = levels.length < 2 ? "" : levels
+    .map((l, i) => `<button data-level="${i}" class="${i === state.level ? "active" : ""}">difficulty ${num(l.difficulty)}</button>`)
+    .join("");
+  $$("button", el).forEach((b) =>
+    b.addEventListener("click", () => {
+      state.level = Number(b.dataset.level);
+      RENDER[state.view]();
+    })
   );
 }
 
@@ -626,29 +648,31 @@ function metricsTable(rows) {
 }
 
 function renderValidation() {
-  $("#val-note").textContent = `First ${D.meta.eval_tracks} validation seeds from 1000, difficulty ${num(D.meta.difficulty)}, deterministic actions, one episode per track.`;
-  $("#val-table").innerHTML = metricsTable(D.validation);
-  const keys = Object.keys(D.validation);
+  levelTabs($("#val-level"));
+  const { difficulty, validation: V } = level();
+  $("#val-note").textContent = `First ${D.meta.eval_tracks} validation seeds from 1000, difficulty ${num(difficulty)}, deterministic actions, one episode per track.`;
+  $("#val-table").innerHTML = metricsTable(V);
+  const keys = Object.keys(V);
   const el = $("#val-charts");
   el.innerHTML = "";
-  const pp = D.validation.pure_pursuit || {};
+  const pp = V.pure_pursuit || {};
   const bar = (id, title, values, max, info) =>
     makeChart(chartCard(el, id, title, info), {
       type: "bar",
       data: { labels: keys.map(policyName), datasets: [{ data: values, backgroundColor: keys.map((k) => alpha(policyColor(k), 0.8)), borderRadius: 4 }] },
       options: { plugins: { legend: { display: false } }, scales: { y: { min: 0, max } } },
     });
-  bar("val-lap", "Laps completed", keys.map((k) => D.validation[k].lap_success_rate), 1, {
+  bar("val-lap", "Laps completed", keys.map((k) => V[k].lap_success_rate), 1, {
     what: "Share of the validation tracks where each driver finished a full lap. Same tracks and difficulty for everyone.",
     good: `Higher is better. 0.7 is the MVP target and pure pursuit, the hand written driver, reaches ${pct(pp.lap_success_rate)}. Random should be near 0.`,
     read: "This is the main number. PPO beating random proves it learned something, matching pure pursuit means it drives as reliably as a driver that knows the track.",
   });
-  bar("val-time", "Lap time, finished laps only (s)", keys.map((k) => D.validation[k].mean_lap_time), undefined, {
+  bar("val-time", "Lap time, finished laps only (s)", keys.map((k) => V[k].mean_lap_time), undefined, {
     what: "Average time of the laps that were completed. Failed attempts are left out.",
     good: `Lower is better. Pure pursuit needs ${num(pp.mean_lap_time)} s.`,
     read: "Only fair next to the laps completed chart. A driver that finishes few laps can look fast because only its easy tracks count.",
   });
-  bar("val-speed", "Average speed (km/h)", keys.map((k) => D.validation[k].mean_speed * 3.6), undefined, {
+  bar("val-speed", "Average speed (km/h)", keys.map((k) => V[k].mean_speed * 3.6), undefined, {
     what: "Forward speed averaged over every step of every attempt, crashes included.",
     good: `Higher is better if laps are still finished. Pure pursuit averages ${num((pp.mean_speed || 0) * 3.6, 0)} km/h and the car tops out at ${num(D.meta.max_speed * 3.6, 0)} km/h.`,
     read: "High speed with many crashes means it is reckless. Very low speed means it hesitates or stands still.",
@@ -667,10 +691,84 @@ function renderValidation() {
     type: "bar",
     data: {
       labels: keys.map(policyName),
-      datasets: outcomes.map(([o, f]) => ({ label: OUTCOME[o][0], data: keys.map((k) => f(D.validation[k])), backgroundColor: OUTCOME[o][1], borderRadius: 2 })),
+      datasets: outcomes.map(([o, f]) => ({ label: OUTCOME[o][0], data: keys.map((k) => f(V[k])), backgroundColor: OUTCOME[o][1], borderRadius: 2 })),
     },
     options: { plugins: { legend: { position: "bottom" } }, scales: { x: { stacked: true }, y: { stacked: true, min: 0, max: 1 } } },
   });
+}
+
+// ---------- statistics ----------
+const fmtCi = (ci, f = pct) => (ci && ci[0] != null ? `${f(ci[0])} to ${f(ci[1])}` : "-");
+const fmtP = (p) => (p == null ? "n/a" : p < 0.0001 ? "< 0.0001" : num(p, 4));
+
+function intervalChart(el, id, title, S, key, info) {
+  const keys = Object.keys(S.intervals);
+  const colors = keys.map(policyColor);
+  makeChart(chartCard(el, id, title, info), {
+    data: {
+      labels: keys.map(policyName),
+      datasets: [
+        { type: "bar", label: "95% interval", data: keys.map((k) => S.intervals[k][key + "_ci"]), backgroundColor: colors.map((c) => alpha(c, 0.25)), borderColor: colors, borderWidth: 1, borderSkipped: false, barPercentage: 0.4 },
+        { type: "line", label: "estimate", data: keys.map((k) => S.intervals[k][key]), showLine: false, pointRadius: 5, pointBackgroundColor: colors, pointBorderColor: colors },
+      ],
+    },
+    options: { plugins: { legend: { position: "bottom" } }, scales: { y: { min: 0, max: 1 } } },
+  });
+}
+
+function infoCard(title, info, body) {
+  return `<div class="card"><div class="chart-title">${title}${infoButton(info)}</div><div class="table-wrap">${body}</div></div>`;
+}
+
+function renderStatistics() {
+  levelTabs($("#stat-level"));
+  const L = level();
+  const S = L.stats;
+  const body = $("#stat-body");
+  if (!S) {
+    body.innerHTML = `<div class="card empty">${icon("alert")}<p>This data.js was built before statistics existed. Rebuild with <code>make dashboard</code>.</p></div>`;
+    return;
+  }
+  $("#stat-note").textContent = `Difficulty ${num(L.difficulty)}, first ${D.meta.eval_tracks} validation tracks from 1000. Every policy drove the same tracks, so every test is paired by track.`;
+  body.innerHTML = `<div class="grid-2" id="stat-charts"></div>`;
+  const charts = $("#stat-charts");
+  intervalChart(charts, "stat-lap", "Laps completed with 95% interval", S, "lap_rate", {
+    what: "Dot is the share of tracks lapped, the bar is the range where the true rate likely lies. One model uses the Wilson interval, pooled seeds a bootstrap over tracks.",
+    good: "A high dot with a short bar. Bars of two drivers that do not overlap mean a clear difference.",
+    read: "With few tracks the bars are wide. 20 of 20 laps is still compatible with about 84%, so a perfect score is not proof of perfection.",
+  });
+  intervalChart(charts, "stat-progress", "Share of the lap driven with 95% interval", S, "progress", {
+    what: "Mean progress over tracks with a bootstrap interval, 1 is a full lap.",
+    good: "Close to 1 with a short bar.",
+    read: "Separates a driver that almost finishes from one that never starts, even when both lap 0%.",
+  });
+
+  const rows = Object.entries(S.intervals).map(([k, s]) => {
+    const seeds = s.lap_rate_per_seed ? s.lap_rate_per_seed.map(pct).join(", ") : "-";
+    return `<tr><td><span class="dot" style="display:inline-block;background:${policyColor(k)}"></span> ${policyName(k)}</td><td>${s.n_models}</td><td>${s.n_tracks}</td><td>${pct(s.lap_rate)}</td><td>${fmtCi(s.lap_rate_ci)}</td><td>${seeds}</td><td>${fmtCi(s.lap_rate_seed_ci)}</td><td>${pct(s.progress)}</td><td>${fmtCi(s.progress_ci)}</td></tr>`;
+  });
+  const intervals = `<table><thead><tr><th>policy</th><th>models</th><th>tracks</th><th>laps</th><th>95% interval</th><th>per seed</th><th>seed t interval</th><th>lap driven</th><th>95% interval</th></tr></thead><tbody>${rows.join("")}</tbody></table>`;
+
+  const tests = S.tests.map((t) => {
+    const pa = t.a.startsWith("pooled:"), pb = t.b.startsWith("pooled:");
+    const seeds = !t.models ? "" : pa && pb ? `, seed ${t.models[0]} of each` : pa ? `, seed ${t.models[0]}` : pb ? `, seed ${t.models[1]}` : "";
+    const verdict = t.p_holm == null ? `<span class="sig">no pairs</span>` : t.p_holm < 0.05 ? `<span class="sig yes">differ</span>` : `<span class="sig">no evidence</span>`;
+    return `<tr><td>${policyName(t.a)} vs ${policyName(t.b)}</td><td>${t.test}${seeds}</td><td>${t.detail}</td><td>${fmtP(t.p)}</td><td>${fmtP(t.p_holm)}</td><td>${verdict}</td></tr>`;
+  });
+  const testTable = `<table><thead><tr><th>pair</th><th>test</th><th>detail</th><th>p</th><th>p Holm</th><th>result</th></tr></thead><tbody>${tests.join("")}</tbody></table>`;
+  const friedman = S.friedman == null ? "" : `<p class="muted">Friedman test on per track progress over all drivers above, p ${fmtP(S.friedman)}. Under 0.05 means at least one driver differs from the rest.</p>`;
+  const note = S.note ? `<p class="muted">${S.note}</p>` : "";
+
+  body.insertAdjacentHTML("beforeend", infoCard("Intervals per policy", {
+    what: "Each row is one driver. Pooled rows join every seed of one PPO config, with the lap rate of each seed and a Student t interval over seeds.",
+    good: "Per seed values close together. The seed t interval tells whether the training method is reliable, not just one lucky model.",
+    read: "The track interval measures how well these models drive. The seed interval measures how much a new training run could differ, it is wide with 3 seeds.",
+  }, intervals));
+  body.insertAdjacentHTML("beforeend", infoCard("Paired tests", {
+    what: "McNemar compares laps using only the tracks where one driver lapped and the other did not. Wilcoxon compares progress and lap time track by track. Holm raises every p to account for running many tests at once.",
+    good: "Result differ means p Holm under 0.05, a difference unlikely to come from luck on these tracks.",
+    read: "No evidence is not proof of equality, with few tracks real small differences can hide. Detail shows the discordant tracks or the median difference.",
+  }, testTable + friedman + note));
 }
 
 function renderTest() {
@@ -919,6 +1017,7 @@ const RENDER = {
   },
   training: renderTraining,
   validation: renderValidation,
+  statistics: renderStatistics,
   test: renderTest,
   simulation: renderSimulation,
   physics: renderPhysics,
