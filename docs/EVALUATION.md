@@ -4,15 +4,15 @@ How S3 measures any driver on tracks it never trained on. Code lives in `evaluat
 
 ## Track splits
 
-Every track comes from a seed. The same seed and difficulty always give the same track.
+Every track comes from a track seed. The same track seed and difficulty always give the same track.
 
-| Split | Seeds | Used for |
+| Split | Track seeds | Used for |
 |---|---|---|
 | Train | 100000 and up | PPO training only. The env picks these when `track_seed` is None |
 | Validation | 1000 to 1999 | Comparing runs, tuning, gates, debugging |
 | Test | 10000 to 99999 | The final reported numbers, run once at the end |
 
-`evaluate` raises an error for any training seed, so a training track can never reach the results. Never tune anything on the test split.
+`evaluate` raises an error for any training track seed, so a training track can never reach the results. Never tune anything on the test split.
 
 ## What a baseline is
 
@@ -23,7 +23,7 @@ A baseline is a simple driver that needs no learning. It tells us what "good" an
   - Steering aims at the centerline point 10 m ahead with the pure pursuit formula `atan(2 L sin(alpha) / d)`, where `L` is the wheelbase, `alpha` the angle to the point and `d` its distance.
   - Speed looks at points 10, 20 and 30 m ahead, estimates how sharp the coming corner is and picks the speed the tires can hold, `sqrt(GRIP / curvature)`, clipped between 6 and 16 m/s. Throttle or brake pushes the car toward that speed.
 
-Pure pursuit is the reference that a good driver can lap these tracks. On validation seeds 1000 to 1004 it laps every track at difficulty 0, 0.5 and 1 in about 30 s. This was Gate 1 (the env is solvable).
+Pure pursuit is the reference that a good driver can lap these tracks. On validation track seeds 1000 to 1049 it laps every track at difficulty 0, 0.5 and 1, in 29.5 s, 32.3 s and 41.5 s on average. This was Gate 1 (the env is solvable).
 
 Both baselines are callables, `action = policy(obs)`, exactly like a trained model, so the same evaluation code runs all of them.
 
@@ -31,9 +31,9 @@ Both baselines are callables, `action = policy(obs)`, exactly like a trained mod
 
 `evaluate(policy, seeds, difficulty, env=None)` in `evaluation/evaluate.py`
 
-1. For each seed it builds that track and puts the car on the start line.
+1. For each track seed it builds that track and puts the car on the start line.
 2. It calls `policy(obs)` and `env.step(action)` until the episode ends with a lap, off road (10 s on grass or hitting the barrier), stuck (10 s without progress) or timeout (120 s).
-3. It records the outcome of the episode and moves to the next seed.
+3. It records the outcome of the episode and moves to the next track seed.
 
 Pure pursuit must read the same env it drives, so it is passed as `env=`. Other policies let `evaluate` create the env.
 
@@ -59,7 +59,7 @@ A PPO agent needs a model file saved by S2's training script, a `.zip` in `runs/
 
 The model is loaded on CPU and always acts deterministically, so the same model on the same tracks gives the same numbers. `VecNormalize` only scales the reward, so the model gets raw observations and needs no extra stats file.
 
-PPO results change with the training seed. Train the same config with 3 seeds and pass all 3 files. The table then shows mean ± std over them, which is what the report needs.
+PPO results change with the training seed. Train the same config with 3 training seeds and pass all 3 files. The table then shows mean ± std over them, which is what the report needs.
 
 ## Commands
 
@@ -88,19 +88,19 @@ Final results only, once, at the end of W4
 make run CMD="python -m evaluation.evaluate --policy ppo --model runs/a_s0/model.zip runs/a_s1/model.zip runs/a_s2/model.zip --split test --n 200 --out runs/final_ppo"
 ```
 
-Options are listed in the README. Every run writes `runs/<out>/eval.json` with the arguments, the seeds and the metrics, and prints a Markdown table to paste into PLAN.md.
+Options are listed in the README. Every run writes `runs/<out>/eval.json` with the arguments, the track seeds and the metrics, and prints a Markdown table.
 
 ## Report figures (T13)
 
 `evaluation/plots.py` makes static PNG figures for the report and slides. They go to `runs/figures/` and only the final ones are copied to `results/` and committed.
 
-**Learning curve.** Reads `val_curve.csv`, which training writes every `eval.freq` steps with the metrics above on the validation tracks. It plots lap success rate and mean progress against training steps, the mean over seeds with a ± std band. Seeds are cut to the checks they all reached.
+**Learning curve.** Reads `val_curve.csv`, which training writes every `eval.freq` steps with the metrics above on the validation tracks. It plots lap success rate and mean progress against training steps, the mean over training seeds with a ± std band. Training seeds are cut to the checks they all reached.
 
 ```bash
 make run CMD="python -m evaluation.plots curve --runs runs/mvp_s0 runs/mvp_s1 runs/mvp_s2 --label mvp --out runs/figures/curve_mvp.png"
 ```
 
-**Failure analysis.** Drives a policy on the tracks of a split, keeps the first episodes that did not finish a lap and plots each one. The plot shows the road edges, the barriers (red dotted), the path colored by speed and a red cross where it ended, titled with the seed, the reason and the progress.
+**Failure analysis.** Drives a policy on the tracks of a split, keeps the first episodes that did not finish a lap and plots each one. The plot shows the road edges, the barriers (red dotted), the path colored by speed and a red cross where it ended, titled with the track seed, the reason and the progress.
 
 ```bash
 make run CMD="python -m evaluation.plots failures --policy ppo --model runs/mvp_s1/model.zip --split val --n 50 --count 3"
@@ -108,7 +108,7 @@ make run CMD="python -m evaluation.plots failures --policy ppo --model runs/mvp_
 
 For each failure write one or two lines in the report on why it happened, for example the speed before the cross shows a corner taken too fast, a short path ending on the start line shows a car that never got going. Use validation tracks while developing and the test split once for the final three.
 
-**Results bar chart.** Lap, off-track and stuck rates per policy from `eval.json` files, with std bars when PPO has several seeds. Each entry is `name=path`.
+**Results bar chart.** Lap, off-track and stuck rates per policy from `eval.json` files, with std bars when PPO has several training seeds. Each entry is `name=path`.
 
 ```bash
 make run CMD="python -m evaluation.plots bars --evals ppo=runs/eval_ppo_val/eval.json pure_pursuit=runs/eval_pure_pursuit_val/eval.json random=runs/eval_random_val/eval.json"
@@ -123,7 +123,7 @@ make run CMD="python -m evaluation.demo --policies ppo pure_pursuit --model runs
 make run CMD="python -m evaluation.demo --policies ppo --model runs/mvp_s1/best_model.zip --seed 1003 --out videos/failure.mp4"
 ```
 
-Pick the failure seed from the `failures` command above.
+Pick the failing track seed from the `failures` command above.
 
 ## Confidence intervals and tests
 
@@ -139,7 +139,7 @@ Files written before this change have no per-track episodes, rerun `evaluate` fo
 
 - Same `--n`, `--split` and `--difficulty` for every policy in one table
 - Validation while developing, test only for the final table
-- Three training seeds for PPO and ablations
+- Three training seeds for every PPO config
 - Off-track and stuck rates read, not only success
 - 95% interval and paired test p-values from `evaluation.stats` next to every comparison
 - Result added to docs/REPORT_EVALUATION.md

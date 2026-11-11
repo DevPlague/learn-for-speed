@@ -9,7 +9,7 @@ The unit opens with the idea that a model is only as good as the way it is measu
 The goals of our evaluation are the ones on slide 4.
 
 - Verify real performance, on tracks the agent never trained on
-- Compare models fairly, PPO against baselines and against its ablations
+- Compare models fairly, PPO against baselines and between PPO configs
 - Support decisions, for example Gate 1, the MVP check and which model goes to the demo
 
 ## 2. The problem and what a sample is
@@ -17,10 +17,10 @@ The goals of our evaluation are the ones on slide 4.
 Before choosing metrics, Metrics Reloaded (slide 25) asks for the "fingerprint" of the problem. Ours is not image classification or segmentation, so we translate the idea.
 
 - **Task.** Sequential control. A policy drives a car around a closed track until it finishes a lap or fails.
-- **Sample unit.** One **episode on one track**. Each track comes from a seed, so the same seed gives the same track for every policy.
+- **Sample unit.** One **episode on one track**. Each track comes from a track seed, so the same track seed gives the same track for every policy.
 - **Data splits.** Training tracks 100000 and up, validation 1000 to 1999, test 10000 to 99999. Test is run once for the final table. This avoids the most common evaluation error, measuring on data used for tuning (slide 16, distinct train and test distribution).
 - **Paired design.** All policies drive the **same** list of track seeds. The results of two policies on track 1007 are paired observations of the same "item", like two classifiers predicting on the same dataset (slide 40, "mismo dataset, pareado"). This drives every test choice below.
-- **Two sources of randomness.** The track (which tracks we sampled) and the training seed (PPO trained three times with seeds 0, 1, 2 gives three different agents). Both have to appear in the uncertainty we report.
+- **Two sources of randomness.** The track (which tracks we sampled) and the training seed (PPO trained three times with training seeds 0, 1, 2 gives three different agents). Both have to appear in the uncertainty we report.
 
 ## 3. Metric selection (Tema 8 sections 1 to 3)
 
@@ -64,7 +64,7 @@ Slide 23 shows that how missing values are treated can change a mean from 0.90 t
 
 Slide 21 warns that a global mean can hide a group where the model fails. For PPO the groups are the training seeds. The MVP result shows why this matters.
 
-| Seed | Lap rate |
+| Training seed | Lap rate |
 |---|---|
 | 0 | 100% |
 | 1 | 0% |
@@ -73,8 +73,8 @@ Slide 21 warns that a global mean can hide a group where the model fails. For PP
 
 The mean of 61% describes none of the three agents. It averages two working agents with one that never learned. The rules are
 
-- per-seed values are **always** shown next to the mean
-- the std over seeds (± in the tables) shows how much training luck matters, it is not an error bar of the estimate
+- per training seed values are **always** shown next to the mean
+- the std over training seeds (± in the tables) shows how much training luck matters, it is not an error bar of the estimate
 
 ## 5. Uncertainty, confidence intervals (slides 20, 46)
 
@@ -90,18 +90,18 @@ Example from validation, pure pursuit lapped 50 of 50 tracks. The Wilson interva
 
 ### 5.2 Bootstrap interval over tracks
 
-For progress, and for the PPO lap rate pooled over its seeds, the per-track values are not a simple proportion. We use the **percentile bootstrap**. Resample the 50 tracks with replacement 10000 times, compute the mean each time, and take the 2.5% and 97.5% percentiles. It assumes no distribution, which suits bounded metrics like progress (slide 40 notes that bounded metrics break symmetry assumptions).
+For progress, and for the PPO lap rate pooled over its training seeds, the per-track values are not a simple proportion. We use the **percentile bootstrap**. Resample the 50 tracks with replacement 10000 times, compute the mean each time, and take the 2.5% and 97.5% percentiles. It assumes no distribution, which suits bounded metrics like progress (slide 40 notes that bounded metrics break symmetry assumptions).
 
 ### 5.3 t interval over training seeds
 
-The two intervals above treat the trained agents as fixed and only ask "what if we had driven other tracks". They do not say what happens if we **train again**. For that the sample is the training seed, and we have three. The Student t interval with 2 degrees of freedom gives, for the MVP lap rate, 0.61 with seed interval [0, 1] after clipping. It is honest. Three agents that disagree this much tell us almost nothing about the next one. The report states this limit instead of hiding it.
+The two intervals above treat the trained agents as fixed and only ask "what if we had driven other tracks". They do not say what happens if we **train again**. For that the sample is the training seed, and we have three. The Student t interval with 2 degrees of freedom gives, for the MVP lap rate, 0.61 with interval [0, 1] after clipping. It is honest. Three agents that disagree this much tell us almost nothing about the next one. The report states this limit instead of hiding it.
 
 The two kinds of interval answer two different questions.
 
 | Interval | Randomness covered | Question |
 |---|---|---|
 | Wilson or bootstrap over tracks | which tracks were drawn | how good are **these** trained agents on new tracks |
-| t over seeds | which training run we got | how good is **the training method** |
+| t over training seeds | which training run we got | how good is **the training method** |
 
 ## 6. Hypothesis tests (Tema 8 section 4)
 
@@ -144,35 +144,35 @@ For each track, each of the two policies either finished a lap or did not. That 
 
 Tracks where both succeed or both fail say nothing about which is better. Only the **discordant** tracks b and c matter. Under H0 a discordant track is equally likely to favour A or B, so b follows a Binomial(b + c, 0.5). Slide 43 gives the chi-square form M = (|b − c| − 1)² / (b + c), valid when b + c ≥ 20, and the binomial otherwise. We often have fewer than 20 discordant tracks, so `stats.py` always uses the **exact binomial** form, which is valid for any count.
 
-Example. PPO seed 2 against pure pursuit at difficulty 0. Pure pursuit finished 8 tracks that PPO did not, PPO finished none that pure pursuit did not. b = 0, c = 8, p = 2 x 0.5⁸ = 0.0078. Pure pursuit's higher lap rate is significant.
+Example. PPO training seed 2 against pure pursuit at difficulty 0. Pure pursuit finished 8 tracks that PPO did not, PPO finished none that pure pursuit did not. b = 0, c = 8, p = 2 x 0.5⁸ = 0.0078. Pure pursuit's higher lap rate is significant.
 
-McNemar compares two single models, so for PPO each training seed is tested separately against the baseline. When both sides have three seeds (full model against an ablation) seed i is paired with seed i, because they share the training seed.
+McNemar compares two single models, so for PPO each training seed is tested separately against the baseline. When both sides have three training seeds (two PPO configs) training seed i is paired with training seed i.
 
 ### 6.4 Wilcoxon signed-rank for progress and lap time (slide 40)
 
-For each track take the difference A − B. Rank the absolute differences, add the ranks of the positive ones and of the negative ones. If A and B were equivalent the two sums would be similar. It is non-parametric, uses the size of the differences and not only their sign, and is the test slide 40 recommends for skew, outliers and bounded metrics. For PPO with several seeds we first average each track over the seeds, so there is one paired value per track.
+For each track take the difference A − B. Rank the absolute differences, add the ranks of the positive ones and of the negative ones. If A and B were equivalent the two sums would be similar. It is non-parametric, uses the size of the differences and not only their sign, and is the test slide 40 recommends for skew, outliers and bounded metrics. For PPO with several training seeds we first average each track over the training seeds, so there is one paired value per track.
 
 Example. PPO against pure pursuit at difficulty 0 on lap time, tracks both finished. Median difference −5.4 s, p < 0.0001. PPO is significantly faster when it finishes.
 
 ### 6.5 Many policies, Friedman and Holm (slide 42)
 
-The final table compares PPO, its ablations and two baselines. Testing every pair at α = 0.05 inflates the type I error. With 4 models there are 6 pairs, and the chance of at least one false "significant" result is well above 5% (slide 42).
+The final table compares the PPO configs and two baselines. Testing every pair at α = 0.05 inflates the type I error. With 4 models there are 6 pairs, and the chance of at least one false "significant" result is well above 5% (slide 42).
 
 1. **Friedman test** on per-track progress across all policies. It ranks the policies on each track and asks whether some policy ranks consistently higher. If p ≥ α we stop, no difference shown.
 2. If Friedman rejects, pairwise tests (McNemar and Wilcoxon above) tell **which** pairs differ. Slide 42 suggests a post hoc like Nemenyi. We use the **Holm** correction on all pairwise p-values instead. It controls the same family-wise error, is less conservative than Bonferroni, and needs only scipy. The "p Holm" column is the one to read for significance.
 
 ## 7. Limits we report openly
 
-- **Three training seeds.** Enough to see that training is unstable, far too few to test differences between training methods at seed level. A Mann-Whitney test with 3 against 3 cannot reach p < 0.05 at all, its smallest possible p is 0.1. Our tests are per track, so they speak about the trained agents we have, and the seed t interval shows how wide the uncertainty about the method is.
-- **Power.** With 50 tracks a lap rate interval is about ± 0.1 wide. The final test split uses 200 tracks to bring that to about ± 0.07. Small real differences between ablations may still not reach significance, which is a type II error risk (slide 38), not proof of equality.
+- **Three training seeds.** Enough to see that training is unstable, far too few to test differences between training methods at training seed level. A Mann-Whitney test with 3 against 3 cannot reach p < 0.05 at all, its smallest possible p is 0.1. Our tests are per track, so they speak about the trained agents we have, and the training seed t interval shows how wide the uncertainty about the method is.
+- **Power.** With 50 tracks a lap rate interval is about ± 0.1 wide. The final test split uses 200 tracks to bring that to about ± 0.07. Small real differences between PPO configs may still not reach significance, which is a type II error risk (slide 38), not proof of equality.
 - **Selection.** `best_model.zip` is chosen on validation tracks 1000 to 1019, so validation numbers are slightly optimistic. Only test numbers go in the final table.
 - **Deterministic policy.** Each policy is run once per track with deterministic actions. The variation we measure comes from tracks and training seeds, not from action noise.
 
 ## 8. Current results with intervals and tests
 
-Validation tracks 1000 to 1049, 3 PPO seeds of `mvp`. Full output in `runs/stats_val_d0.md` and `runs/stats_val_d1.md`.
+Validation tracks 1000 to 1049, 3 training seeds of `mvp`. Full output in `runs/stats_val_d0.md` and `runs/stats_val_d1.md`.
 
-| Difficulty | Policy | Lap rate | 95% CI over tracks | Per seed | Progress |
+| Difficulty | Policy | Lap rate | 95% CI over tracks | Per training seed | Progress |
 |---|---|---|---|---|---|
 | 0 | PPO mvp | 0.61 | [0.58, 0.65] | 1.00, 0.00, 0.84 | 0.64 |
 | 0 | pure pursuit | 1.00 | [0.93, 1.00] | - | 1.00 |
@@ -183,15 +183,15 @@ Validation tracks 1000 to 1049, 3 PPO seeds of `mvp`. Full output in `runs/stats
 
 Friedman rejects at both difficulties (p < 0.0001), so the three policies differ. Pairwise, Holm corrected
 
-- **PPO against random.** Seeds 0 and 2 lap significantly more tracks (McNemar, 50 and 42 discordant tracks at difficulty 0, p < 0.0001). Seed 1 is indistinguishable from random, 0 discordant tracks. Progress is higher (Wilcoxon p < 0.0001). Gate 1 holds for the method in two of three runs.
-- **PPO against pure pursuit.** At difficulty 0 seed 0 ties with pure pursuit (no discordant track), seed 2 laps fewer tracks (p 0.023 after Holm). At difficulty 1 every PPO seed laps significantly fewer (p ≤ 0.002 after Holm). On tracks both finish, PPO is about 5 s faster (Wilcoxon p < 0.0001).
-- **Reading.** PPO learns a faster but less reliable driver than the hand-written controller, and whether training works at all depends on the seed. Both statements are now backed by tests, not only by means.
+- **PPO against random.** Training seeds 0 and 2 lap significantly more tracks (McNemar, 50 and 42 discordant tracks at difficulty 0, p < 0.0001). Training seed 1 is indistinguishable from random, 0 discordant tracks. Progress is higher (Wilcoxon p < 0.0001). Gate 1 holds for the method in two of three runs.
+- **PPO against pure pursuit.** At difficulty 0 training seed 0 ties with pure pursuit (no discordant track), training seed 2 laps fewer tracks (p 0.023 after Holm). At difficulty 1 every PPO training seed laps significantly fewer (p ≤ 0.002 after Holm). On tracks both finish, PPO is about 5 s faster (Wilcoxon p < 0.0001).
+- **Reading.** PPO learns a faster but less reliable driver than the hand-written controller, and whether training works at all depends on the training seed. Both statements are now backed by tests, not only by means.
 
 ## 9. Checklist for any reported number
 
 - Same track seeds, same difficulty and same `--n` for every policy in a table
 - Lap rate with a 95% interval and the three outcome rates, never lap rate alone
-- PPO per seed next to the mean
+- PPO per training seed next to the mean
 - Lap time compared only on tracks both finished
 - Paired tests, McNemar for laps and Wilcoxon for progress and time
 - Friedman first and Holm corrected p-values when more than two policies are compared
