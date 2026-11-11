@@ -1,10 +1,10 @@
-"""Training reward wrapper"""
+"""Training reward, a wrapper around the env so sim/ keeps its own placeholder."""
 
 from dataclasses import dataclass
 
 import gymnasium as gym
 
-IDLE_SPEED = 1.0  # m/s, slower than this in either direction counts as standing still
+from sim import car
 
 
 @dataclass(frozen=True)
@@ -13,7 +13,8 @@ class RewardWeights:
     time: float = 0.01
     jitter: float = 0.01  # per unit of steering change between steps
     grass: float = 0.05  # per step on grass
-    idle: float = 0.03  # per step below IDLE_SPEED, costs more than reversing at full speed
+    idle: float = 0.03  # per step with forward speed under 1 m/s
+    crawl: float = 0.0  # per step gaining under 2 m/s along the track, creeping and circling too
     off_road: float = 5.0  # once, when the attempt fails off road
     stuck: float = 10.0  # once, when the attempt fails stuck, worse than crashing
     lap: float = 5.0  # once, when the lap is done
@@ -48,12 +49,14 @@ class RaceReward(gym.Wrapper):
 
     def _reward(self, dprogress, dsteer, info):
         w = self.weights
+        along = dprogress * self.env.unwrapped.track.length / car.DT  # m/s along the centerline
         return (
             w.progress * dprogress
             - w.time
             - w.jitter * dsteer
             - w.grass * info["on_grass"]
-            - w.idle * (abs(info["speed"]) < IDLE_SPEED)
+            - w.idle * (abs(info["speed"]) < 1.0)
+            - w.crawl * (along < 2.0)
             - w.off_road * info["off_road"]
             - w.stuck * info["stuck"]
             + w.lap * info["lap_done"]

@@ -1,6 +1,6 @@
 # Spec
 
-Technical contract of the project. Read it before touching a module interface. If an interface changes, update this file and the Decisions list in docs/PLAN.md in the same PR. Keep everything simple. Add structure only when a real need appears.
+Technical contract of the project. Read it before touching a module interface. If an interface changes, update this file in the same PR. Keep everything simple. Add structure only when a real need appears.
 
 ## System
 A car drives on a procedurally generated closed track. The simulation core computes physics, sensors and track queries. A gymnasium environment wraps it and computes the reward. PPO trains on that environment. An evaluation module runs any policy on held-out tracks and produces the results table and the demos.
@@ -17,7 +17,7 @@ Data flow is `sim` then `learning` then `evaluation`. `evaluation` also uses `si
 | `dashboard/` | S2 (Learning) | Local web dashboard with learning curves, validation tables, synced replays and physics plots |
 | `configs/` | S2 | One YAML file per experiment |
 | `tests/` | each owner tests their folder | pytest, run with `make test` |
-| `docs/` | everyone | PLAN.md for planning and logs, SPEC.md for this contract, PHYSICS.md for the physics guide |
+| `docs/` | everyone | PLAN.md for planning, SPEC.md for this contract, PHYSICS.md for the physics guide |
 
 Proposed file names are track, car, lidar, env, render in `sim/`, reward and train in `learning/`, baselines, evaluate and demo in `evaluation/`. Owners may merge, split or rename files. Only the contracts below must stay stable.
 
@@ -59,10 +59,10 @@ The observation size is exported as `OBS_DIM` in `sim/env.py` so learning and ev
 ### Learning
 | Item | Contract |
 |---|---|
-| `RaceReward(env, weights)` | Gymnasium wrapper in `learning/reward.py`. Reward is progress (laps) times `progress`, minus `time` per step, minus `jitter` times the steering change, minus `grass` per step on grass, minus `idle` per step slower than 1 m/s in either direction, minus `off_road` once, minus `stuck` once, plus `lap` once. Weights come from the `reward` block of the config. Adds `is_success` (lap done) to `info` at the end of each episode |
+| `RaceReward(env, weights)` | Gymnasium wrapper in `learning/reward.py`. Reward is progress (laps) times `progress`, minus `time` per step, minus `jitter` times the steering change, minus `grass` per step on grass, minus `idle` per step slower than 1 m/s in either direction, minus `crawl` per step gaining under 2 m/s along the centerline (0 by default), minus `off_road` once, minus `stuck` once, plus `lap` once. Weights come from the `reward` block of the config. Adds `is_success` (lap done) to `info` at the end of each episode |
 | Training | `python -m learning.train --config configs/<name>.yaml --seed <n>` writes `runs/<name>_s<n>/` with `config.yaml`, `model.zip` (final model), `best_model.zip`, `checkpoints/`, `val_curve.csv`, `progress.csv` (SB3 logger, one row per PPO update) and TensorBoard events |
 | Validation | Every `eval.freq` steps `evaluate` from `evaluation/` drives the first `eval.tracks` validation seeds (from 1000) once with deterministic actions and appends one row to `val_curve.csv` (`timesteps` plus the evaluation metrics). `best_model.zip` has the highest lap success rate, then the highest mean progress |
-| `load_policy(path)` | In `learning/policy.py`. Returns a policy callable for any saved model. No normalization stats are needed because only the reward is normalized |
+| `ppo_policy(path)` | In `evaluation/evaluate.py`. Returns a policy callable for any saved model. No normalization stats are needed because only the reward is normalized |
 
 ### Dashboard
 | Item | Contract |
@@ -96,7 +96,7 @@ One YAML file per experiment in `configs/`. The training script copies the resol
 | Language and tools | Python 3.12 only, Rust for the core, uv, make, Linux, Docker for headless runs |
 | Simulation | Custom gymnasium env, bicycle model that grips in slow corners and drifts past the grip limit. Car state is [x, y, yaw, v, steer, v_lat] |
 | Physics core | Rust for car step, lidar and centerline queries, with PyO3 and maturin. No NumPy fallback, Docker is the alternative to installing Rust |
-| Tracks method | Periodic cubic spline through noisy points on a circle. Difficulty sets the point count (6 to 12) and the noise. Tracks with a corner tighter than the road or overlapping roads are redrawn |
+| Tracks method | Periodic cubic spline through noisy points on a circle. Difficulty sets the point count (6 to 12) and the noise (0.1 to 0.5). Corners tighter than 12 m are eased in place, keeping their angle. Tracks whose far parts come too close are redrawn with less noise |
 | Car constants | dt 0.05 s, wheelbase 2.5 m, max steer 0.5 rad, max speed 20 m/s, reverse 5 m/s, grip limit 8 m/s^2 (4 on grass) |
 | Tests | pytest finds the packages through `pythonpath = ["."]` in pyproject |
 | Rendering | pygame, imported lazily, so training is headless |
@@ -119,7 +119,7 @@ Ruff for lint and format through `make lint` and `make format`. No other rules. 
 - Claim a task in docs/PLAN.md with your initials before you start it.
 
 ## Open questions
-Nothing here is decided. The owner decides, then moves the answer to the tables above and logs it in docs/PLAN.md.
+Nothing here is decided. The owner decides, then moves the answer to the tables above.
 
 | Question | Owner |
 |---|---|
