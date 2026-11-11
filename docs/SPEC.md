@@ -14,6 +14,7 @@ Data flow is `sim` then `learning` then `evaluation`. `evaluation` also uses `si
 | `rust/` | S1 (Simulation) | Per-step physics, car, lidar and track queries |
 | `learning/` | S2 (Learning) | Reward, PPO training script, curriculum, checkpoints, logging |
 | `evaluation/` | S3 (Evaluation) | Baselines, evaluation on held-out seeds, metrics, plots, videos |
+| `dashboard/` | S2 (Learning) | Local web dashboard with learning curves, validation tables, synced replays and physics plots |
 | `configs/` | S2 | One YAML file per experiment |
 | `tests/` | each owner tests their folder | pytest, run with `make test` |
 | `docs/` | everyone | PLAN.md for planning and logs, SPEC.md for this contract, PHYSICS.md for the physics guide |
@@ -62,6 +63,14 @@ The observation size is exported as `OBS_DIM` in `sim/env.py` so learning and ev
 | Training | `python -m learning.train --config configs/<name>.yaml --seed <n>` writes `runs/<name>_s<n>/` with `config.yaml`, `model.zip` (final model), `best_model.zip`, `checkpoints/`, `val_curve.csv`, `progress.csv` (SB3 logger, one row per PPO update) and TensorBoard events |
 | Validation | Every `eval.freq` steps `evaluate` from `evaluation/` drives the first `eval.tracks` validation seeds (from 1000) once with deterministic actions and appends one row to `val_curve.csv` (`timesteps` plus the evaluation metrics). `best_model.zip` has the highest lap success rate, then the highest mean progress |
 | `load_policy(path)` | In `learning/policy.py`. Returns a policy callable for any saved model. No normalization stats are needed because only the reward is normalized |
+
+### Dashboard
+| Item | Contract |
+|---|---|
+| Build | `python -m dashboard.build --runs <run> [...]` reads every `runs/*/config.yaml` with its `progress.csv` and `val_curve.csv`, evaluates the chosen runs (`best_model.zip`), pure pursuit and random on validation seeds, records replays and writes `runs/dashboard/` |
+| Page | `runs/dashboard/index.html` opens from disk with no server. Static files live in `dashboard/static/`, data goes to `data.js`, Chart.js is vendored |
+| Replays | `record_episode(policy, seed, difficulty, env=None)` in `dashboard/record.py` returns per step car state, lateral offset, progress, grass flag, action and lidar, plus the outcome |
+| Test split | The page only shows test numbers from S3 folders `runs/eval_*_test/eval.json` and never runs test seeds itself |
 
 ### Rust core
 The crate in `rust/` builds the Python module `racing_core` with PyO3 and maturin. It is a uv path dependency, so `make setup` builds it and `uv run` rebuilds it when a Rust file changes. `make rust` forces a rebuild. Docker builds it inside the image, so changing `rust/` needs `make docker-build` again.

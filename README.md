@@ -1,65 +1,177 @@
-# racing-rl
+<p align="center">
+  <img src="docs/media/demo.gif" alt="Pure pursuit driving a validation track, lidar rays and minimap visible" width="560">
+</p>
 
-A 2D top-down racing car that **learns to drive circuits it has never seen**, using reinforcement learning (PPO).
+<p align="center">
+  <img src="https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white" alt="Python 3.12">
+  <img src="https://img.shields.io/badge/Rust-stable-B7410E?logo=rust&logoColor=white" alt="Rust">
+  <img src="https://img.shields.io/badge/Gymnasium-env-0081A5" alt="Gymnasium">
+  <img src="https://img.shields.io/badge/Stable--Baselines3-PPO-a97bff" alt="Stable-Baselines3 PPO">
+  <br>
+  <img src="https://img.shields.io/badge/uv-managed-DE5FE9?logo=uv&logoColor=white" alt="uv">
+  <img src="https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white" alt="Docker">
+</p>
 
-Tracks are generated procedurally as random closed splines. The car senses the road only through its own sensors, a simulated lidar plus its speed, steering and sideways slip, and it outputs steering and throttle or brake. We train with a curriculum, easy tracks first, and evaluate on **held-out tracks** against baselines (random and a hand-written pure pursuit controller) and ablations.
+<h1 align="center">learn-for-speed</h1>
 
-Python 3.12 runs the environment and the training (`gymnasium`, `stable-baselines3` PPO on CPU PyTorch, `pygame` to draw). Rust runs the per-step physics.
+<p align="center">A 2D top-down racing car that <b>learns to drive circuits it has never seen</b>, using reinforcement learning.</p>
 
-There are two ways to run it, pick one. Local is faster and needs Rust installed. Docker needs nothing but Docker.
+## 🏁 Introduction
 
-## Option A, local on Linux
+learn-for-speed generates random closed circuits and trains a PPO agent to lap them as fast as it can.
 
-1. **Install uv**, the Python tool.
-   ```bash
-   curl -LsSf https://astral.sh/uv/install.sh | sh
-   ```
-2. **Install Rust**, needed to build the physics core.
-   ```bash
-   curl https://sh.rustup.rs -sSf | sh -s -- -y --profile minimal -c clippy -c rustfmt
-   ```
-3. **Get the code.**
-   ```bash
-   git clone git@github.com:DevPlague/learn-for-speed.git
-   cd learn-for-speed
-   ```
-4. **Build everything.** The first run downloads the dependencies and compiles Rust, so it takes a few minutes.
-   ```bash
-   make setup
-   ```
-5. **Check that it works.** All tests should pass.
-   ```bash
-   make test
-   ```
-6. **Drive the car.** A window opens with the car on the start line.
-   ```bash
-   make play
-   ```
+- The car sees the world only through its own sensors. A simulated lidar with 25 rays, plus its speed, steering and sideways slip. No map, no centerline, no GPS.
+- Physics are a bicycle model written in Rust. The car grips in slow corners, drifts in fast ones and can reverse out of trouble.
+- Every result is measured on **held-out tracks** the agent never trained on, against a random driver and a hand-written pure pursuit controller.
 
-## Option B, Docker
+The GIF above is the pure pursuit baseline on validation track 1000. The yellow lines are the lidar rays the agent gets as input.
 
-1. **Install Docker**, following [the official guide](https://docs.docker.com/engine/install/). Your user must be able to run `docker` without `sudo`.
-2. **Get the code.**
-   ```bash
-   git clone git@github.com:DevPlague/learn-for-speed.git
-   cd learn-for-speed
-   ```
-3. **Build the image.** It installs Python and Rust inside the image and compiles the core, so it takes a few minutes. Build it again whenever `rust/`, `pyproject.toml` or the lockfile change.
-   ```bash
-   make docker-build
-   ```
-4. **Check that it works.** All tests should pass.
-   ```bash
-   make docker-test
-   ```
-5. **Drive the car.** The container shows its window on your screen. This needs an X11 display, and Wayland desktops normally provide one through XWayland.
-   ```bash
-   make docker-play
-   ```
+## Contents
 
-Your code is mounted into the container, so Python changes apply at once and anything written to `runs/` or `videos/` lands in your own folder.
+- [Features](#-features)
+- [Install](#-install)
+- [Usage](#-usage)
+- [Make commands](#-make-commands)
+- [Driving keys](#driving-keys)
+- [Seeds and splits](#seeds-and-splits)
+- [Project layout](#project-layout)
+- [Troubleshooting](#troubleshooting)
+- [FAQ](#faq)
+- [Contributing](#-contributing)
+- [To Do](#to-do)
 
-## Driving
+## ✨ Features
+
+**Simulation**
+
+- Procedural closed spline tracks with a difficulty knob from 0 (gentle) to 1 (tight corners).
+- Rust physics core, one call per step with NumPy arrays, so training stays fast and headless.
+- Grass is allowed but slow and slippery. Barriers end the attempt.
+- Drive any track yourself with the keyboard.
+
+**Learning**
+
+- Custom Gymnasium env with a 28 value observation in [-1, 1] and a 2 value action, steer and throttle or brake.
+- Reward for progress along the centerline, with penalties for time, steering jitter, grass, standing still, crashing and getting stuck, and a bonus for each lap.
+- PPO from Stable-Baselines3 on CPU, parallel envs, one YAML config per experiment, checkpoints and a validation curve during training.
+
+**Evaluation**
+
+- Random and pure pursuit baselines.
+- Lap success, off-track and stuck rates, lap time, speed and progress, as a Markdown table and JSON, with mean ± std over training seeds.
+
+**Dashboard**
+
+- One static page built from `runs/`. Learning curves, validation tables, synced replays of every policy with lidar and follow camera, and physics plots. No server needed.
+
+## 📦 Install
+
+Pick one. Local is faster and needs Rust. Docker needs nothing but Docker.
+
+**Option A, local on Linux**
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh                                            # uv, the Python tool
+curl https://sh.rustup.rs -sSf | sh -s -- -y --profile minimal -c clippy -c rustfmt     # Rust, for the physics core
+git clone git@github.com:DevPlague/learn-for-speed.git
+cd learn-for-speed
+make setup     # first run downloads dependencies and compiles Rust, a few minutes
+make test      # everything should pass
+```
+
+**Option B, Docker**
+
+Install Docker from [the official guide](https://docs.docker.com/engine/install/). Your user must be able to run `docker` without `sudo`.
+
+```bash
+git clone git@github.com:DevPlague/learn-for-speed.git
+cd learn-for-speed
+make docker-build   # again whenever rust/, pyproject.toml or uv.lock change
+make docker-test
+```
+
+Your folder is mounted into the container, so Python changes apply at once and everything written to `runs/` lands on your disk.
+
+## 🚦 Usage
+
+The whole project in six steps. Each one is a single command, run from the repo folder.
+
+| Step | Local | Docker |
+|---|---|---|
+| 1. Drive a track yourself | `make play` | `make docker-play` |
+| 2. Train an agent | `make train CONFIG=tiny` | `make docker-run CMD="python -m learning.train --config configs/tiny.yaml"` |
+| 3. Watch it learn | `make tb` | `make docker-tb` |
+| 4. Evaluate it | `make eval POLICY=ppo MODEL=runs/tiny_s0/best_model.zip` | `make docker-run CMD="python -m evaluation.evaluate --policy ppo --model runs/tiny_s0/best_model.zip --split val --n 20"` |
+| 5. Compare with the baselines | `make eval POLICY=pure_pursuit` and `make eval POLICY=random` | same with `--policy pure_pursuit` or `random` |
+| 6. See it all in the dashboard | `make dashboard RUNS="tiny_s0"` | `make docker-run CMD="python -m dashboard.build --runs tiny_s0"` |
+
+**1. Drive.** A window opens on the start line. Pick any track and difficulty with `make play SEED=1002 DIFFICULTY=1`.
+
+**2. Train.** `CONFIG` is a file name in `configs/` and `SEED` the training seed, default 0. Outputs go to `runs/<config>_s<seed>/`, with the config, `model.zip`, `best_model.zip`, checkpoints, `progress.csv` and TensorBoard logs.
+
+| Config | What it is | Time on a laptop |
+|---|---|---|
+| `tiny` | 20k steps, checks that everything runs | about 1 minute |
+| `probe`, `probe_nojitter` | 200k steps, quick reward experiments | a few minutes |
+| `mvp` | the main run | long, ask the team first |
+
+For mean ± std, train the same config with several seeds, for example `make train CONFIG=mvp SEED=1`.
+
+**3. Watch.** TensorBoard opens on http://localhost:6006 and reads every run in `runs/`. Refresh it while training runs.
+
+**4 and 5. Evaluate.** One episode per validation track, default the first 20 (`N=20`) at difficulty 0.5. Pass several models at once to average over seeds, `MODEL="runs/mvp_s0/best_model.zip runs/mvp_s1/best_model.zip"`. Results print as a table and save to `runs/eval_<policy>_val/eval.json`. The full process is in [docs/EVALUATION.md](docs/EVALUATION.md).
+
+**6. Dashboard.** `RUNS` lists the run folders to evaluate and replay next to the baselines. Then open `runs/dashboard/index.html` in your browser.
+
+## 🛠 Make commands
+
+`make help` prints them all. Variables go after the command, like `make play SEED=1002`.
+
+**Set up**
+
+| Command | What it does |
+|---|---|
+| `make setup` | Creates the Python env and builds the Rust core. First time and after pulling new dependencies |
+| `make rust` | Forces a Rust rebuild, only if a Rust change does not seem to apply |
+| `make clean` | Removes Python caches, keeps `runs/`, `videos/` and `models/` |
+
+**Drive, train and evaluate**
+
+| Command | Variables | What it does |
+|---|---|---|
+| `make play` | `SEED` `DIFFICULTY` | Drive by keyboard |
+| `make train` | `CONFIG` `SEED` | Train PPO from `configs/CONFIG.yaml` |
+| `make eval` | `POLICY` `MODEL` `N` `DIFFICULTY` `SPLIT` | Evaluate `random`, `pure_pursuit` or `ppo` |
+| `make run CMD="..."` | `CMD` | Run any command inside the env |
+
+**Look at results**
+
+| Command | Variables | What it does |
+|---|---|---|
+| `make tb` | | TensorBoard on http://localhost:6006 |
+| `make dashboard` | `RUNS` | Build the dashboard into `runs/dashboard/` |
+
+**Check code**
+
+| Command | What it does |
+|---|---|
+| `make test` | Runs all tests |
+| `make lint` | Checks Python with ruff and Rust with rustfmt and clippy |
+| `make format` | Auto-formats Python and Rust |
+| `make bench` | Prints env steps per second and track generation time |
+
+**Docker**
+
+| Command | What it does |
+|---|---|
+| `make docker-build` | Builds the image |
+| `make docker-test` | Runs all tests in the container |
+| `make docker-play` | Drives by keyboard with the window on your screen, takes `SEED` and `DIFFICULTY` |
+| `make docker-run CMD="..."` | Runs any command in the container, for headless training or evaluation |
+| `make docker-shell` | Opens a shell in the container |
+| `make docker-tb` | TensorBoard from the container on http://localhost:6006 |
+
+## Driving keys
 
 | Key | Action |
 |---|---|
@@ -68,84 +180,14 @@ Your code is mounted into the container, so Python changes apply at once and any
 | Left, Right | Steer |
 | Esc | Quit |
 
-Choose the track with a seed and its difficulty from 0 (gentle) to 1 (tight corners). The default is seed 1000 at difficulty 0.5.
+An attempt fails after 10 s in a row on grass, on reaching the barrier, after 10 s without progress, or after 120 s. A failed attempt or a finished lap puts you back on the start line. Corners taken too fast make the car drift, as [the physics guide](docs/PHYSICS.md) explains.
 
-```bash
-make play SEED=1002 DIFFICULTY=1
-make docker-play SEED=1002 DIFFICULTY=1
-```
+## Seeds and splits
 
-The grass is allowed but slow and slippery. An attempt fails after 10 s in a row on grass, on reaching the barrier, after 10 s without progress, or after 120 s. A failed attempt or a finished lap puts you back on the start line and prints the result in the terminal. Corners taken too fast make the car drift, as [the physics guide](docs/PHYSICS.md) explains. To change how the car behaves, edit the constants in `rust/src/car.rs` and run `make play` again. Rust rebuilds by itself.
-
-## Evaluation
-
-`evaluation/evaluate.py` runs a policy for one episode per track and prints a Markdown table with lap success, off-track and stuck rates, mean lap time, mean speed and mean progress. It also saves `runs/<out>/eval.json`.
-
-The baselines need no model and work right away.
-
-```bash
-make run CMD="python -m evaluation.evaluate --policy pure_pursuit --split val --n 20"
-make run CMD="python -m evaluation.evaluate --policy random --split val --n 20"
-```
-
-A PPO agent needs a model that the training script saved, a `.zip` file in `runs/<name>/`. That can be the final model of a finished run or a checkpoint saved while a run is still training, so you can check progress before it ends. Pass one file per training seed and the table shows mean ± std over them.
-
-```bash
-make run CMD="python -m evaluation.evaluate --policy ppo --model runs/a_s0/model.zip runs/a_s1/model.zip --split val --n 50"
-```
-
-| Option | Meaning |
-|---|---|
-| `--policy` | `random`, `pure_pursuit` or `ppo` |
-| `--model` | one or more PPO `.zip` files, only with `ppo` |
-| `--split` | `val` (seeds 1000-1999) while developing, `test` (seeds 10000+) only for the final results |
-| `--n` | number of tracks, the first n seeds of the split, so every policy drives the same tracks |
-| `--difficulty` | 0 to 1, default 0.5 |
-| `--out` | output folder, default `runs/eval_<policy>_<split>` |
-
-Training seeds are rejected so no training track reaches the results. Never tune anything on the test split. The full process is in [docs/EVALUATION.md](docs/EVALUATION.md), and what training must provide for it is in [docs/FOR_S2.md](docs/FOR_S2.md).
-
-## Make commands
-
-`make help` prints this list.
-
-### Local
-
-| Command | What it does | When to use it |
+| Split | Track seeds | Used for |
 |---|---|---|
-| `make help` | Lists the commands | You forgot a command |
-| `make setup` | Creates the Python env and builds the Rust core | First time, and after pulling new dependencies |
-| `make rust` | Forces a rebuild of the Rust core | Only if a Rust change does not seem to apply, it is normally automatic |
-| `make play` | Drives the car by keyboard, takes `SEED` and `DIFFICULTY` | To try the physics or a track |
-| `make run CMD="python x.py"` | Runs any command inside the env | To run a script |
-| `make test` | Runs all tests | Before opening a PR |
-| `make lint` | Checks Python with ruff and Rust with rustfmt and clippy | Before opening a PR |
-| `make format` | Auto-formats Python and Rust | When `make lint` complains about style |
-| `make bench` | Prints env steps per second and track generation time | After changing the sim |
-| `make tb` | TensorBoard on http://localhost:6006, reading `runs/` | To watch training |
-| `make clean` | Removes Python caches, keeps `runs/`, `videos/` and `models/` | To tidy up |
+| Train | 100000 and up | Training only, random every episode |
+| Validation | 1000 to 1999 | Everything while developing, `make eval` default |
+| Test | 10000 and up | Final results only, with `SPLIT=test`. Never tune on it |
 
-### Docker
-
-| Command | What it does | When to use it |
-|---|---|---|
-| `make docker-build` | Builds the image | First time, and after a change in `rust/` or the dependencies |
-| `make docker-test` | Runs all tests in the container | To check it works without a local install |
-| `make docker-play` | Drives the car with the window on your screen, takes `SEED` and `DIFFICULTY` | To try the physics without a local install |
-| `make docker-run CMD="python x.py"` | Runs any command in the container | Headless training or evaluation |
-| `make docker-shell` | Opens a shell in the container | To look around or debug |
-| `make docker-tb` | TensorBoard from the container on http://localhost:6006 | To watch training |
-
-## Troubleshooting
-
-- **`Rust not found`.** Run step 2 of Option A, or use Docker.
-- **`uv not found` after installing it.** Open a new terminal so the shell picks up the new path.
-- **`make docker-play` gives `x11 not available` or no window.** Check that `echo $DISPLAY` prints something and that you are at the desktop, not on SSH. Then run `make docker-build` again in case your image is older than this guide.
-- **A Rust change has no effect in Docker.** The image holds its own compiled copy, so run `make docker-build`.
-- **Workers crash with `SubprocVecEnv`.** The script needs its code inside `if __name__ == "__main__":`, because the workers import it again.
-
-## Docs
-
-- [`docs/SPEC.md`](docs/SPEC.md) is the contract between modules.
-- [`docs/PLAN.md`](docs/PLAN.md) has the tasks, risks, experiment log and decisions.
-- [`docs/PHYSICS.md`](docs/PHYSICS.md) explains every physics formula and where it is in the code.
+The evaluation script rejects training seeds, so no training track reaches the results.

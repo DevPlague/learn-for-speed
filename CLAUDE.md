@@ -1,15 +1,16 @@
-# racing-rl
+# learn-for-speed
 
 2D top-down racing car. PPO (stable-baselines3) learns to drive procedurally generated tracks; judged on held-out tracks vs baselines (random, pure pursuit) and ablations. School project, 3 students, ~6 weeks. Python 3.12 only, uv, Linux. Deadline/format unknown: keep a demo-ready state.
 
 ## Commands (use make, never raw pip/python)
-- `make setup` env; `make play` drive by keyboard; `make run CMD="python x.py"`; `make test | lint | format | rust | bench | tb | clean`
+- `make setup` env; `make play` drive by keyboard; `make run CMD="python x.py"`; `make train CONFIG=tiny SEED=0`; `make eval POLICY=pure_pursuit` (val split); `make test | lint | format | rust | bench | tb | dashboard | clean`
 - Docker (headless, outputs bind-mounted): `make docker-build | docker-run CMD=".." | docker-shell | docker-test | docker-play | docker-tb`
 
 ## Layout
 - `sim/` S1 (Simulation): track generation, env, render, play. `rust/` S1: per-step physics. Formulas in docs/PHYSICS.md.
 - `learning/` S2 (Learning): reward, PPO training, curriculum. `configs/` one YAML per experiment.
 - `evaluation/` S3 (Evaluation): baselines, evaluate, plots, videos. `tests/` each owner tests their folder.
+- `dashboard/` S2, local web dashboard built from runs/ into runs/dashboard/ (`make dashboard RUNS="mvp_s0"`).
 - Only the owner edits a folder. Contracts between modules: docs/SPEC.md.
 - Plan, tasks, risks, experiment and decision logs: docs/PLAN.md.
 

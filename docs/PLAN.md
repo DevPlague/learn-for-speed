@@ -40,7 +40,7 @@ If the deadline is earlier, cut from the bottom: Stretch, then ablations, then s
 - Done = works via `make`, tests/lint pass, logged here, someone else looked at it.
 
 ## Tasks
-**Doing:** T08 (S2)  |  **Review:** none
+**Doing:** T08 (S2), T18 (S2)  |  **Review:** none
 
 **Backlog**
 - [ ] T08 (S2) First MVP run (fixed gentle tracks); watch it; fix env/reward bugs
@@ -51,6 +51,7 @@ If the deadline is earlier, cut from the bottom: Stretch, then ablations, then s
 - [ ] T14 (S3) Videos: side by side vs pure pursuit, one failure case, lidar view; trajectory figure
 - [ ] T15 Gate 2 decision (stretch or not) logged below
 - [ ] T16 Report draft, slides, two demo rehearsals (live and offline fallback)
+- [ ] T18 (S2) Local dashboard with training curves, validation and test tables, synced replay grid and physics plots, built from runs/
 
 **Done**
 - [x] T02 Code layout in CLAUDE.md and docs/SPEC.md (2026-11-02)
@@ -117,6 +118,8 @@ Probabilities are judgement-based estimates, not measurements. Ending with nothi
 - 2026-11-06 D25 MVP config uses jitter weight 0.1 and learning rate 0.0005. The 200k probe with jitter 0.05 tended to stand still, so the validation curve is watched for that. Why: the student chose smoother steering for the MVP.
 - 2026-11-06 D26 Validation during training calls `evaluation.evaluate` on the first `eval.tracks` validation seeds and appends a row to `val_curve.csv` with the metrics from SPEC.md. `best_model.zip` is the highest lap rate, then mean progress. Replaces the reward based EvalCallback and its `evaluations.npz`. Why: training, validation and test share one metric definition, as docs/FOR_S2.md proposed.
 - 2026-11-06 D27 Reward gains `idle` 0.03 per step below 1 m/s and `stuck` 10 once, more than `off_road` 5. MVP uses jitter 0.01 and learning rate 0.0003. Refines D24 and replaces the MVP values of D25. The 2M step MVP with jitter 0.1 stood still on every validation track, its episodes all ended stuck after 10 s with reward about minus 2, because giving up cost less than trying and crashing. Now standing still costs more than reversing at full speed, and getting stuck costs more than crashing. Why: standing still must never be the best plan.
+- 2026-11-06 D28 New folder `dashboard/` owned by S2. It is a static HTML page with vendored Chart.js, built by `python -m dashboard.build` into `runs/dashboard/`, with canvas replays of recorded validation episodes. It reuses `evaluate` and the baselines from `evaluation/` and never runs test seeds. Why: one place to show training, validation, physics and demo replays without a server or new Python dependencies.
+- 2026-11-09 D29 Project renamed from racing-rl to learn-for-speed in `pyproject.toml`, the Docker image, the dashboard and the docs, to match the GitHub repo. Python packages and the Rust module `racing_core` keep their names. New `make train` and `make eval` wrap the existing scripts, and `make eval` defaults to the validation split. The dashboard drops its New run and copy evaluate buttons. Why: one name everywhere and a README where every step is one make command.
 
 ## Report skeleton
 1. Problem and why RL  2. Environment (physics, tracks, sensors, reward)  3. Method (PPO, curriculum, hyperparameters)  4. Experiments (baselines, held-out results, ablations)  5. Failure analysis  6. Conclusions and limits.
