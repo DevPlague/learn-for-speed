@@ -38,27 +38,58 @@ def check_seeds(seeds):
         raise ValueError(f"seeds outside validation and test splits {bad[:5]}")
 
 
+def run_episode(policy, seed, env):
+    """One episode on one track. Returns the final info, the outcome and the car path."""
+    env.track_seed = seed
+    obs, info = env.reset(seed=seed)
+    path, speeds = [], []
+    terminated = truncated = False
+    while not (terminated or truncated):
+        obs, _, terminated, truncated, info = env.step(policy(obs))
+        path.append(np.array(env.state[:2]))
+        speeds.append(abs(info["speed"]))
+    if info["lap_done"]:
+        outcome = "lap"
+    elif info["off_road"]:
+        outcome = "off_road"
+    elif info["stuck"]:
+        outcome = "stuck"
+    else:
+        outcome = "timeout"
+    return {
+        "seed": seed,
+        "info": info,
+        "outcome": outcome,
+        "path": np.array(path),
+        "speeds": np.array(speeds),
+    }
+
+
 def evaluate(policy, seeds, difficulty, env=None):
     """One episode per track seed. Pass `env` when the policy reads from it, like pure pursuit."""
     check_seeds(seeds)
     env = RacingEnv(difficulty=difficulty) if env is None else env
     env.difficulty = difficulty
     laps, offs, stucks, lap_times, speeds, progress = [], [], [], [], [], []
+    episodes = []
     for seed in seeds:
-        env.track_seed = seed
-        obs, info = env.reset(seed=seed)
-        ep_speeds = []
-        done = False
-        while not done:
-            obs, _, terminated, truncated, info = env.step(policy(obs))
-            ep_speeds.append(abs(info["speed"]))
-            done = terminated or truncated
+        ep = run_episode(policy, seed, env)
+        info = ep["info"]
+        lap_time = float(info["lap_time"]) if info["lap_done"] else None
+        episodes.append(
+            {
+                "seed": seed,
+                "outcome": ep["outcome"],
+                "progress": float(info["progress"]),
+                "lap_time": lap_time,
+            }
+        )
         laps.append(info["lap_done"])
         offs.append(info["off_road"])
         stucks.append(info["stuck"])
         if info["lap_done"]:
             lap_times.append(info["lap_time"])
-        speeds.append(np.mean(ep_speeds))
+        speeds.append(np.mean(ep["speeds"]))
         progress.append(info["progress"])
     return {
         "n_episodes": len(seeds),
@@ -68,6 +99,7 @@ def evaluate(policy, seeds, difficulty, env=None):
         "mean_lap_time": float(np.mean(lap_times)) if lap_times else None,
         "mean_speed": float(np.mean(speeds)),
         "mean_progress": float(np.mean(progress)),
+        "episodes": episodes,
     }
 
 
@@ -104,6 +136,15 @@ def ppo_policy(model_path):
     return lambda obs: model.predict(obs, deterministic=True)[0]
 
 
+def make_policy(name, env, model=None):
+    """Policy by CLI name. Pure pursuit reads `env`, so evaluate must drive that same env."""
+    if name == "ppo":
+        return ppo_policy(model)
+    if name == "pure_pursuit":
+        return PurePursuitPolicy(env)
+    return RandomPolicy(seed=0)
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--policy", choices=["random", "pure_pursuit", "ppo"], required=True)
@@ -115,19 +156,18 @@ def main():
     args = p.parse_args()
 
     seeds = split_seeds(args.split, args.n)
-    if args.policy == "ppo":
-        if not args.model:
-            p.error("--policy ppo needs --model")
-        row = aggregate([evaluate(ppo_policy(m), seeds, args.difficulty) for m in args.model])
-    elif args.policy == "pure_pursuit":
+    if args.policy == "ppo" and not args.model:
+        p.error("--policy ppo needs --model")
+    results = []
+    for model in args.model if args.policy == "ppo" else [None]:
         env = RacingEnv(difficulty=args.difficulty)
-        row = evaluate(PurePursuitPolicy(env), seeds, args.difficulty, env=env)
-    else:
-        row = evaluate(RandomPolicy(seed=0), seeds, args.difficulty)
+        results.append(evaluate(make_policy(args.policy, env, model), seeds, args.difficulty, env))
+    row = aggregate(results) if args.policy == "ppo" else results[0]
+    episodes = [r.pop("episodes") for r in results]  # one list per model, paired by track seed
 
     out = Path(args.out or f"runs/eval_{args.policy}_{args.split}")
     out.mkdir(parents=True, exist_ok=True)
-    summary = {"args": vars(args), "seeds": seeds, "metrics": row}
+    summary = {"args": vars(args), "seeds": seeds, "metrics": row, "episodes": episodes}
     (out / "eval.json").write_text(json.dumps(summary, indent=2))
     print(to_markdown({args.policy: row}))
     print(f"\nsaved {out / 'eval.json'}")

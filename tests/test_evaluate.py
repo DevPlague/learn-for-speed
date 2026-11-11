@@ -20,6 +20,7 @@ class MockEnv:
         self.used.append(self.track_seed)
         self.kind, self.length = OUTCOMES[self.track_seed]
         self.steps = 0
+        self.state = np.zeros(6)
         return np.zeros(3, dtype=np.float32), {}
 
     def step(self, action):

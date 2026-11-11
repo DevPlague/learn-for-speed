@@ -85,10 +85,55 @@ make run CMD="python -m evaluation.evaluate --policy ppo --model runs/a_s0/model
 Final results only, once, at the end of W4
 
 ```bash
-make run CMD="python -m evaluation.evaluate --policy ppo --model runs/a_s0/model.zip runs/a_s1/model.zip runs/a_s2/model.zip --split test --n 100 --out runs/final_ppo"
+make run CMD="python -m evaluation.evaluate --policy ppo --model runs/a_s0/model.zip runs/a_s1/model.zip runs/a_s2/model.zip --split test --n 200 --out runs/final_ppo"
 ```
 
 Options are listed in the README. Every run writes `runs/<out>/eval.json` with the arguments, the seeds and the metrics, and prints a Markdown table to paste into PLAN.md.
+
+## Report figures (T13)
+
+`evaluation/plots.py` makes static PNG figures for the report and slides. They go to `runs/figures/` and only the final ones are copied to `results/` and committed.
+
+**Learning curve.** Reads `val_curve.csv`, which training writes every `eval.freq` steps with the metrics above on the validation tracks. It plots lap success rate and mean progress against training steps, the mean over seeds with a ± std band. Seeds are cut to the checks they all reached.
+
+```bash
+make run CMD="python -m evaluation.plots curve --runs runs/mvp_s0 runs/mvp_s1 runs/mvp_s2 --label mvp --out runs/figures/curve_mvp.png"
+```
+
+**Failure analysis.** Drives a policy on the tracks of a split, keeps the first episodes that did not finish a lap and plots each one. The plot shows the road edges, the barriers (red dotted), the path colored by speed and a red cross where it ended, titled with the seed, the reason and the progress.
+
+```bash
+make run CMD="python -m evaluation.plots failures --policy ppo --model runs/mvp_s1/model.zip --split val --n 50 --count 3"
+```
+
+For each failure write one or two lines in the report on why it happened, for example the speed before the cross shows a corner taken too fast, a short path ending on the start line shows a car that never got going. Use validation tracks while developing and the test split once for the final three.
+
+**Results bar chart.** Lap, off-track and stuck rates per policy from `eval.json` files, with std bars when PPO has several seeds. Each entry is `name=path`.
+
+```bash
+make run CMD="python -m evaluation.plots bars --evals ppo=runs/eval_ppo_val/eval.json pure_pursuit=runs/eval_pure_pursuit_val/eval.json random=runs/eval_random_val/eval.json"
+```
+
+## Demo videos (T14)
+
+`evaluation/demo.py` lets several policies drive the same track at once and joins their views left to right in one MP4 at 20 fps. Each view is labeled at the bottom with the policy name and, once that car is done, its outcome. The view is S1's renderer with the lidar rays, the minimap and the speed, lap and time display. A car that finishes keeps its last frame until the others are done. Videos go to `videos/`, which is never committed. Copy the good ones to the shared drive.
+
+```bash
+make run CMD="python -m evaluation.demo --policies ppo pure_pursuit --model runs/mvp_s0/best_model.zip --seed 1000"
+make run CMD="python -m evaluation.demo --policies ppo --model runs/mvp_s1/best_model.zip --seed 1003 --out videos/failure.mp4"
+```
+
+Pick the failure seed from the `failures` command above.
+
+## Confidence intervals and tests
+
+`evaluation/stats.py` reads two or more `eval.json` files run on the same tracks and prints each policy with a 95% interval, then paired tests between every pair with Holm corrected p-values, and a Friedman test when there are three or more. The theory and the choice of each test are in docs/EVALUATION_STATISTICS.md.
+
+```bash
+make run CMD="python -m evaluation.stats ppo=runs/eval_ppo_val_d0/eval.json pure_pursuit=runs/eval_pure_pursuit_val_d0/eval.json random=runs/eval_random_val_d0/eval.json --out runs/stats_val_d0.md"
+```
+
+Files written before this change have no per-track episodes, rerun `evaluate` for them.
 
 ## Checklist before reporting a number
 
@@ -96,4 +141,5 @@ Options are listed in the README. Every run writes `runs/<out>/eval.json` with t
 - Validation while developing, test only for the final table
 - Three training seeds for PPO and ablations
 - Off-track and stuck rates read, not only success
+- 95% interval and paired test p-values from `evaluation.stats` next to every comparison
 - Result logged in the PLAN.md experiment table
