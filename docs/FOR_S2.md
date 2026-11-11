@@ -1,6 +1,6 @@
 # What S3 needs from S2
 
-Evaluation (S3) runs every trained model on validation and test tracks and builds the results table, figures and videos. This page lists what the training side (S2) has to provide so that works. Points marked **proposal** are not agreed yet. Reply in the PR or at the weekly sync and we log the decision in PLAN.md.
+Evaluation (S3) runs every trained model on validation and test tracks and builds the results table, figures and videos. This page lists what the training side (S2) has to provide so that works. Points marked **proposal** are not agreed yet. Reply in the PR or at the weekly sync.
 
 ## Status on 9 Nov
 
@@ -8,7 +8,7 @@ Delivered by S2 and working with evaluation
 - Run folders `runs/<config>_s<seed>/` with `model.zip`, `best_model.zip`, `config.yaml`, `checkpoints/`, `progress.csv` and `val_curve.csv` (PR #5)
 - `val_curve.csv` feeds the learning curve figure directly
 
-MVP results, 3 seeds of `configs/mvp.yaml`, validation 1000 to 1049, difficulty 0 (PLAN.md E01)
+MVP results, 3 seeds of `configs/mvp.yaml`, validation 1000 to 1049, difficulty 0
 
 | Seed | Laps | Off track | Stuck |
 |---|---|---|---|
@@ -26,7 +26,6 @@ Gate 1 passes. The MVP target of 70% is not met on the mean because seed 1 creep
 3. **T12.** The ablation configs, 3 seeds each, same PPO seeds 0, 1, 2.
 4. **Sharing.** `runs/` is not on GitHub. Share each run folder (`best_model.zip`, `model.zip`, `val_curve.csv`, `config.yaml`) on the shared drive, or tell S3 the config so S3 trains it locally at about 30 minutes per seed.
 5. **Dates.** When T11 and T12 will be ready. S3 runs the test split once, before 22 Nov.
-6. **Dashboard.** PR #6 was merged into `s2/mvp`, not main. Open a pull request from `s2/mvp` to main.
 
 ## 1. Observations and actions
 
@@ -34,7 +33,7 @@ Gate 1 passes. The MVP target of 70% is not met on the mean because seed 1 creep
 
 - Keep `VecNormalize` on the **reward only** (`norm_obs=False`). If observations are normalized, tell S3 and save the stats file next to the model, because evaluation would then need to load it.
 - Do not wrap the env in a way that changes observation or action shape (frame stacking, action repeat). If you need one, tell S3 first. It is an interface change for SPEC.md.
-- Any change to obs, action or reward goes into PLAN.md Decisions, as CLAUDE.md says.
+- Any change to obs, action or reward updates SPEC.md, as CLAUDE.md says.
 
 ## 2. Seeds
 

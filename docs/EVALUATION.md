@@ -142,4 +142,4 @@ Files written before this change have no per-track episodes, rerun `evaluate` fo
 - Three training seeds for PPO and ablations
 - Off-track and stuck rates read, not only success
 - 95% interval and paired test p-values from `evaluation.stats` next to every comparison
-- Result logged in the PLAN.md experiment table
+- Result added to docs/REPORT_EVALUATION.md

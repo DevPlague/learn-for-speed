@@ -19,14 +19,14 @@ Read this before working on `evaluation/`. It says what S3 (Evaluation) already 
 | `evaluate`, `run_episode`, `split_seeds`, `check_seeds`, `aggregate`, `to_markdown`, `make_policy`, `ppo_policy`, CLI | `evaluation/evaluate.py` | T10, done |
 | Learning curve from `val_curve.csv`, results bar chart, trajectory plot, failure search, CLI `curve`, `bars`, `failures` | `evaluation/plots.py` | T13, code done |
 | Side by side demo videos with lidar | `evaluation/demo.py` | T14, code done |
-| Confidence intervals and paired tests from eval.json | `evaluation/stats.py`, theory in `docs/EVALUATION_STATISTICS.md` | done (D30) |
+| Confidence intervals and paired tests from eval.json | `evaluation/stats.py`, theory in `docs/EVALUATION_STATISTICS.md` | done |
 | Process guide, S2 handoff | `docs/EVALUATION.md`, `docs/FOR_S2.md` | done |
 
 S2's training (`learning/train.py`) calls our `evaluate` during training and writes `runs/<config>_s<seed>/` with `model.zip`, `best_model.zip`, `val_curve.csv`, `progress.csv`, `checkpoints/` and `config.yaml`. Nothing in `runs/` or `videos/` is on GitHub, so runs must be trained locally or copied from a teammate.
 
 ## Results so far
 
-Fill this table from the student's latest printed summaries and keep it in sync with PLAN.md E00 and E01.
+Fill this table from the student's latest printed summaries.
 
 | Policy | Tracks | Laps | Off track | Stuck | Lap time |
 |---|---|---|---|---|---|
@@ -40,17 +40,12 @@ Per seed the PPO lap rate is 100%, 0% and 84%. Seed 1 is stuck on every track at
 
 ## Next steps after the T13 and T14 PR is merged
 
-1. **Gate 1 and MVP check.** Evaluate the three `mvp` seeds on validation and compare with the baselines on the same tracks and difficulty (0, the MVP trains at 0). Gate 1 passes if PPO beats random. MVP passes at 70% laps or more. Log both in PLAN.md and tell the student to tag `mvp` if it passes.
-2. **Selection bias.** `best_model.zip` is picked on validation seeds 1000 to 1019, the first `eval.tracks`. Numbers on those seeds are optimistic. Report validation on seeds the model was not selected on, or rely on test for the final table. A clean fix is a `start` offset in `split_seeds`, which is an interface change, so ask the student and update SPEC.md and PLAN.md.
+1. **Gate 1 and MVP check.** Evaluate the three `mvp` seeds on validation and compare with the baselines on the same tracks and difficulty (0, the MVP trains at 0). Gate 1 passes if PPO beats random. MVP passes at 70% laps or more. Report both to the student and tell them to tag `mvp` if it passes.
+2. **Selection bias.** `best_model.zip` is picked on validation seeds 1000 to 1019, the first `eval.tracks`. Numbers on those seeds are optimistic. Report validation on seeds the model was not selected on, or rely on test for the final table. A clean fix is a `start` offset in `split_seeds`, which is an interface change, so ask the student and update SPEC.md.
 3. **Failure analysis (T13).** Run `plots failures` on the weakest seed, keep three plots, and help the student write one or two lines per failure. S2 reported that one seed learned to reverse slowly until stuck, which is a good case to show.
 4. **Videos (T14).** Record PPO next to pure pursuit on a validation track, one failure, and a single PPO view for the lidar. Each view is labeled with the policy name and, once it ends, its outcome.
 5. **Final results (W4, by 22 Nov).** After S2 finishes T11 (3 seeds of the target config) and T12 (ablations), run `evaluate --split test --n 200` once for PPO, each ablation and both baselines with the same `--n` and difficulty. Run `evaluation.stats` on all of them, build the bar chart, copy the small PNGs and the Markdown table to `results/` and commit only those.
 6. **Report and slides (T16).** Results section, learning curve, bar chart, failure plots and videos. Help the student rehearse the likely questions in PLAN.md.
-
-## Known issues outside S3
-
-- PR #6 (S2 dashboard) was merged into `s2/mvp`, not into main, because it was stacked on PR #5. S2 must open a pull request from `s2/mvp` to main. Until then `dashboard/` is not on main.
-- `docs/PLAN.md` Decisions had two D12 entries. The S3 one is now D29. D28 comes with the dashboard PR.
 
 ## Quick health check
 
