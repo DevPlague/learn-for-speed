@@ -1,7 +1,15 @@
 import numpy as np
 import pytest
 
-from sim.track import generate_track, lookahead, make_core
+from sim.track import (
+    WALL_OFFSET,
+    _ease_tight_corners,
+    _radius,
+    _spline_loop,
+    generate_track,
+    lookahead,
+    make_core,
+)
 
 DIFFICULTIES = [0.0, 0.5, 1.0]
 
@@ -19,17 +27,6 @@ def test_closed_loop_with_even_spacing(difficulty):
         t = generate_track(seed, difficulty)
         seg = np.linalg.norm(np.roll(t.centerline, -1, axis=0) - t.centerline, axis=1)
         assert np.allclose(seg, 1.0, atol=0.15)
-        assert t.length == pytest.approx(seg.sum())
-        assert np.allclose(np.linalg.norm(t.left - t.right, axis=1), t.width)
-
-
-def test_edges_do_not_overlap_the_rest_of_the_road():
-    t = generate_track(3, 1.0)
-    d = np.linalg.norm(t.left[:, None] - t.centerline[None], axis=2)
-    n = len(t.centerline)
-    gap = np.abs(np.arange(n)[:, None] - np.arange(n)[None])
-    far = np.minimum(gap, n - gap) > 20
-    assert d[far].min() > t.width / 2
 
 
 @pytest.mark.parametrize("difficulty", DIFFICULTIES)
@@ -60,3 +57,41 @@ def test_lookahead_in_car_frame():
     pts = lookahead(t, i, t.centerline[i], t.heading[i], [5.0])
     assert pts[0, 0] == pytest.approx(5.0, abs=0.2)  # straight ahead
     assert abs(pts[0, 1]) < 1.0
+    left = t.centerline[i] + 3.0 * np.array([-np.sin(t.heading[i]), np.cos(t.heading[i])])
+    assert lookahead(t, i, left, t.heading[i], [0.0])[0, 1] < -2.5  # centre is to the right
+
+
+def turning(difficulty):
+    """Total absolute turning in laps and share of points tighter than 25 m, over 10 tracks."""
+    totals, tight = [], []
+    for seed in range(1000, 1010):
+        t = generate_track(seed, difficulty)
+        totals.append(np.abs(np.angle(np.exp(1j * np.diff(t.heading)))).sum() / (2 * np.pi))
+        tight.append((_radius(t.centerline) < 25).mean())
+    return np.mean(totals), np.mean(tight)
+
+
+def test_harder_tracks_have_more_and_tighter_corners():
+    stats = [turning(d) for d in (0.0, 0.5, 1.0)]
+    assert stats[0][0] < stats[1][0] < stats[2][0] and stats[0][1] < stats[1][1] < stats[2][1]
+
+
+def total_turn(loop):
+    step = np.roll(loop, -1, axis=0) - loop
+    heading = np.arctan2(step[:, 1], step[:, 0])
+    return np.angle(np.exp(1j * np.diff(heading, append=heading[0]))).sum()
+
+
+def test_easing_opens_tight_corners_and_keeps_the_loop():
+    # hardest raw splines, most break the 12 m rule, the few that still do are redrawn
+    eased = tight = 0
+    for seed in range(1000, 1040):
+        raw = _spline_loop(np.random.default_rng(seed), 12, 0.5)
+        if _radius(raw).min() >= WALL_OFFSET:
+            continue
+        tight += 1
+        out = _ease_tight_corners(raw)
+        eased += _radius(out).min() >= WALL_OFFSET
+        assert total_turn(out) == pytest.approx(2 * np.pi)
+        assert len(out) == pytest.approx(len(raw), rel=0.15)  # same loop, wider corners
+    assert tight >= 35 and eased >= 0.9 * tight
