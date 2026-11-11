@@ -20,8 +20,6 @@ from evaluation.evaluate import METRICS, evaluate, split_seeds
 from learning.reward import RaceReward, RewardWeights
 from sim.env import RacingEnv
 
-RUNS_DIR = Path("runs")
-
 
 def load_config(path):
     path = Path(path)
@@ -91,7 +89,7 @@ def make_callbacks(cfg, run_dir):
     return checkpoint, ValCurveCallback(cfg, run_dir)
 
 
-def train(cfg, seed, runs_dir=RUNS_DIR):
+def train(cfg, seed, runs_dir="runs"):
     run_dir = Path(runs_dir) / f"{cfg['name']}_s{seed}"
     run_dir.mkdir(parents=True, exist_ok=True)
     (run_dir / "config.yaml").write_text(yaml.safe_dump({**cfg, "seed": seed}, sort_keys=False))

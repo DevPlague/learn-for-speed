@@ -13,22 +13,10 @@ from pathlib import Path
 import yaml
 
 from dashboard.record import record_episode, track_geometry
-from evaluation.baselines import PurePursuitPolicy, RandomPolicy
-from evaluation.evaluate import evaluate, ppo_policy, split_seeds
+from evaluation.evaluate import evaluate, make_policy, split_seeds
 from sim import car, lidar
 from sim.env import RacingEnv
-
-STATIC = Path(__file__).parent / "static"
-PROGRESS_COLUMNS = {
-    "time/total_timesteps": "timesteps",
-    "rollout/ep_rew_mean": "ep_rew_mean",
-    "rollout/ep_len_mean": "ep_len_mean",
-    "train/entropy_loss": "entropy_loss",
-    "train/approx_kl": "approx_kl",
-    "train/value_loss": "value_loss",
-    "train/explained_variance": "explained_variance",
-    "train/clip_fraction": "clip_fraction",
-}
+from sim.track import generate_track
 
 
 def number(text):
@@ -53,7 +41,19 @@ def read_run(run_dir):
     return {
         "name": run_dir.name,
         "config": cfg,
-        "progress": read_csv(run_dir / "progress.csv", PROGRESS_COLUMNS),
+        "progress": read_csv(
+            run_dir / "progress.csv",
+            {
+                "time/total_timesteps": "timesteps",
+                "rollout/ep_rew_mean": "ep_rew_mean",
+                "rollout/ep_len_mean": "ep_len_mean",
+                "train/entropy_loss": "entropy_loss",
+                "train/approx_kl": "approx_kl",
+                "train/value_loss": "value_loss",
+                "train/explained_variance": "explained_variance",
+                "train/clip_fraction": "clip_fraction",
+            },
+        ),
         "val_curve": read_csv(run_dir / "val_curve.csv"),
     }
 
@@ -65,9 +65,9 @@ def model_path(run_dir):
 
 def make_policies(runs_dir, names, env):
     """Policy callables by display name. Pure pursuit reads the shared env."""
-    policies = {f"ppo:{name}": ppo_policy(model_path(runs_dir / name)) for name in names}
-    policies["pure_pursuit"] = PurePursuitPolicy(env)
-    policies["random"] = RandomPolicy(seed=0)
+    policies = {f"ppo:{n}": make_policy("ppo", env, model_path(runs_dir / n)) for n in names}
+    for name in ("pure_pursuit", "random"):
+        policies[name] = make_policy(name, env)
     return policies
 
 
@@ -94,19 +94,13 @@ def build(runs_dir, names, difficulty, n_eval, n_replay, out):
     policies = make_policies(runs_dir, names, env)
 
     validation, replays = {}, {}
+    replay_seeds = split_seeds("val", n_replay)
     for label, policy in policies.items():
         print(f"evaluating {label}")
         validation[label] = evaluate(policy, split_seeds("val", n_eval), difficulty, env=env)
-        replays[label] = [
-            record_episode(policy, seed, difficulty, env=env)
-            for seed in split_seeds("val", n_replay)
-        ]
+        replays[label] = [record_episode(policy, s, difficulty, env=env) for s in replay_seeds]
 
-    tracks = {}
-    for seed in split_seeds("val", n_replay):
-        env.track_seed = seed
-        env.reset(seed=seed)
-        tracks[seed] = track_geometry(env.track)
+    tracks = {seed: track_geometry(generate_track(seed, difficulty)) for seed in replay_seeds}
 
     data = {
         "meta": {
@@ -125,7 +119,7 @@ def build(runs_dir, names, difficulty, n_eval, n_replay, out):
     }
     if out.exists():
         shutil.rmtree(out)
-    shutil.copytree(STATIC, out)
+    shutil.copytree(Path(__file__).parent / "static", out)
     payload = "window.DATA = " + json.dumps(data, separators=(",", ":"))
     (out / "data.js").write_text(payload, encoding="utf-8")
     return out / "index.html"

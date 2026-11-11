@@ -8,17 +8,7 @@ import argparse
 
 import pygame
 
-from sim.env import RacingEnv
-
-
-def outcome(info, truncated):
-    if info["lap_done"]:
-        return f"lap in {info['lap_time']:.1f} s"
-    if info["off_road"]:
-        return "failed, off road"
-    if info["stuck"]:
-        return "failed, no progress"
-    return "failed, timeout" if truncated else ""
+from sim.env import RacingEnv, outcome
 
 
 def main():
@@ -43,7 +33,8 @@ def main():
         env.render()
         clock.tick(env.metadata["render_fps"])
         if terminated or truncated:
-            print(outcome(info, truncated))
+            end = outcome(info)
+            print(f"lap in {info['lap_time']:.1f} s" if end == "lap" else f"failed, {end}")
             pygame.time.wait(1000)
             env.reset()
     env.close()

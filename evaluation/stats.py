@@ -16,11 +16,9 @@ from pathlib import Path
 import numpy as np
 from scipy import stats
 
-ALPHA = 0.05
-
 
 def load(path):
-    """eval.json as a dict. Needs the per-track `episodes` written since the stats update."""
+    """eval.json as a dict. Needs the per-track `episodes` list."""
     data = json.loads(Path(path).read_text())
     if "episodes" not in data:
         raise ValueError(f"{path} has no per-track episodes, rerun evaluate")
@@ -62,7 +60,7 @@ def bootstrap_ci(values, confidence=0.95, n_boot=10_000, seed=0):
 
 
 def t_ci(values, confidence=0.95):
-    """Student t interval of the mean over training seeds. Wide with 3 seeds, which is honest."""
+    """Student t interval of the mean over training seeds."""
     values = np.asarray(values, dtype=float)
     if len(values) < 2:
         return (np.nan, np.nan)
@@ -92,7 +90,7 @@ def mcnemar_exact(a, b):
     """Exact McNemar on two paired 0/1 vectors. Only discordant tracks count.
 
     b10 tracks where A lapped and B did not, b01 the reverse. Under H0 both are equally likely,
-    so b10 follows Binomial(b10 + b01, 0.5). Exact because we often have fewer than 20 discordant.
+    so b10 follows Binomial(b10 + b01, 0.5).
     """
     a, b = np.asarray(a, dtype=bool), np.asarray(b, dtype=bool)
     b10, b01 = int(np.sum(a & ~b)), int(np.sum(~a & b))
@@ -153,11 +151,10 @@ def holm(pvalues):
     p = np.asarray(pvalues, dtype=float)
     order = np.argsort(p)
     adjusted = np.empty_like(p)
-    running = 0.0
-    for rank, idx in enumerate(order):
-        running = max(running, (len(p) - rank) * p[idx])
-        adjusted[idx] = min(1.0, running)
-    return [float(v) for v in adjusted]
+    adjusted[order] = np.minimum(
+        1.0, np.maximum.accumulate((len(p) - np.arange(len(p))) * p[order])
+    )
+    return adjusted.tolist()
 
 
 def fmt_ci(ci):
@@ -208,7 +205,7 @@ def report(evals):
             lines.append(f"| {label} | {detail} | n/a | n/a | - |")
             continue
         p_adj = next(adjusted)
-        sig = "yes" if p_adj < ALPHA else "no"
+        sig = "yes" if p_adj < 0.05 else "no"
         lines.append(f"| {label} | {detail} | {p:.4f} | {p_adj:.4f} | {sig} |")
     if len(evals) >= 3:
         lines += [

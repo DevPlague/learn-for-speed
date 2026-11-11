@@ -12,10 +12,9 @@ from pathlib import Path
 import numpy as np
 
 from evaluation.evaluate import check_seeds, make_policy
-from sim.env import RacingEnv
+from sim.env import RacingEnv, outcome
 
 os.environ.setdefault("SDL_VIDEODRIVER", "dummy")  # no window, works headless and in Docker
-FPS = 20  # one frame per env step, the env runs at 20 steps per second
 _FONT = None
 
 
@@ -56,7 +55,7 @@ def record(policies, seed, difficulty, max_steps=2400):
                 d["obs"], _, terminated, truncated, info = d["env"].step(d["policy"](d["obs"]))
                 d["frame"] = d["env"].render()
                 if terminated or truncated:
-                    outcomes[d["name"]] = outcome(info)
+                    outcomes[d["name"]] = describe(info)
                 d["frame"] = label(
                     d["frame"], f"{d['name']}  {outcomes.get(d['name'], '')}".strip()
                 )
@@ -69,12 +68,9 @@ def record(policies, seed, difficulty, max_steps=2400):
     return frames, outcomes
 
 
-def outcome(info):
-    if info["lap_done"]:
-        return f"lap {info['lap_time']:.1f} s"
-    if info["off_road"]:
-        return "off road"
-    return "stuck" if info["stuck"] else "timeout"
+def describe(info):
+    end = outcome(info)
+    return f"lap {info['lap_time']:.1f} s" if end == "lap" else end.replace("_", " ")
 
 
 def save_video(frames, out):
@@ -82,7 +78,7 @@ def save_video(frames, out):
 
     out = Path(out)
     out.parent.mkdir(parents=True, exist_ok=True)
-    imageio.mimsave(out, frames, fps=FPS, macro_block_size=8)
+    imageio.mimsave(out, frames, fps=RacingEnv.metadata["render_fps"], macro_block_size=8)
     return out
 
 

@@ -3,7 +3,7 @@
 import numpy as np
 
 from sim import car
-from sim.track import lookahead
+from sim.track import lookahead, pursuit_steer
 
 
 class RandomPolicy:
@@ -17,31 +17,20 @@ class RandomPolicy:
 
 
 class PurePursuitPolicy:
-    """Steers toward a centerline point ahead and slows down before sharp corners.
+    """Steers toward the centerline 10 m ahead and slows down before sharp corners.
 
     It reads the track and car state from the env, which a trained agent never sees.
     """
 
-    def __init__(self, env, lookahead_dist=10.0, max_speed=16.0, min_speed=6.0, gain=0.5):
+    def __init__(self, env):
         self.env = env
-        self.lookahead_dist = lookahead_dist
-        self.max_speed = max_speed
-        self.min_speed = min_speed
-        self.gain = gain
-        self.preview = np.array([10.0, 20.0, 30.0])  # meters ahead to sense corners
 
     def __call__(self, obs):
         env = self.env
-        pos, yaw, v = env.state[:2], env.state[2], env.state[3]
-        x, y = lookahead(env.track, env.idx, pos, yaw, [self.lookahead_dist])[0]
-        alpha = np.arctan2(y, x)
-        steer = np.arctan(2 * car.WHEELBASE * np.sin(alpha) / max(np.hypot(x, y), 1e-6))
-
-        # Curvature from the heading change between the car and points ahead
-        pts = lookahead(env.track, env.idx, pos, yaw, self.preview)
-        turn = np.abs(np.arctan2(pts[:, 1], pts[:, 0]))
-        curvature = np.max(2 * np.sin(turn) / self.preview)
-        target = np.sqrt(car.GRIP / max(curvature, 1e-6))
-        target = np.clip(target, self.min_speed, self.max_speed)
-        throttle = np.clip(self.gain * (target - v), -1.0, 1.0)
-        return np.array([np.clip(steer / car.MAX_STEER, -1, 1), throttle], dtype=np.float32)
+        preview = np.array([10.0, 20.0, 30.0])
+        pts = lookahead(env.track, env.idx, env.state[:2], env.state[2], preview)
+        # curvature of the arc to each preview point, the sharpest sets the speed the tires hold
+        curvature = np.max(2 * np.sin(np.abs(np.arctan2(pts[:, 1], pts[:, 0]))) / preview)
+        target = np.clip(np.sqrt(car.GRIP / max(curvature, 1e-6)), 6.0, 16.0)
+        throttle = np.clip(0.5 * (target - env.state[3]), -1.0, 1.0)
+        return np.array([pursuit_steer(pts[0]), throttle], dtype=np.float32)

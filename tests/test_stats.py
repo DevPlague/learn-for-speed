@@ -49,9 +49,9 @@ def test_bootstrap_contains_mean_and_drops_nan():
     assert bootstrap_ci([0.7] * 10) == (pytest.approx(0.7), pytest.approx(0.7))
 
 
-def test_t_ci_wide_with_three_seeds():
-    lo, hi = t_ci([1.0, 0.0, 0.84])
-    assert lo < 0 and hi > 1  # three seeds that disagree say little about the mean
+def test_t_ci_known_value():
+    lo, hi = t_ci([1.0, 0.0, 0.84])  # mean 0.613, sd 0.537, t(0.975, 2) = 4.303
+    assert lo == pytest.approx(-0.721, abs=1e-3) and hi == pytest.approx(1.948, abs=1e-3)
     assert np.isnan(t_ci([0.5])[0])
 
 
@@ -108,7 +108,15 @@ def test_compare_and_report(tmp_path):
     assert c["lap_time_wilcoxon"]["n"] == 0  # bad never lapped, nothing to pair
     third = fake_eval([[LAP] * 6 + [STUCK] * 6])
     text = report({"good": good, "bad": bad, "third": third})
-    assert "Friedman" in text and "p Holm" in text
+    lines = text.splitlines()
+    assert any(
+        r.startswith("| good vs bad lap McNemar models (0, 0)") and r.endswith("| yes |")
+        for r in lines
+    )
+    assert any(
+        "good vs bad lap time both lapped Wilcoxon" in r and "| n/a | n/a |" in r for r in lines
+    )
+    assert "Friedman on per-track progress over 3 policies" in text
     path = tmp_path / "eval.json"
     path.write_text(json.dumps({"metrics": {}}))
     with pytest.raises(ValueError):

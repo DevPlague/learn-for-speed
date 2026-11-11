@@ -7,11 +7,7 @@ from sim import car, lidar
 from sim.env import GRASS_TIME
 
 SIZE = (800, 600)
-SCALE = 8  # pixels per meter
-GRASS, ROAD, EDGE = (40, 110, 50), (70, 70, 75), (235, 235, 235)
-WALL = (150, 150, 160)
-RAY, HIT = (255, 220, 0, 70), (255, 220, 0, 170)  # alpha keeps the lidar see-through
-CAR, WARN = (220, 40, 40), (255, 60, 60)
+EDGE, CAR = (235, 235, 235), (220, 40, 40)
 START_SQUARES = 8
 MAP_SIZE, MAP_MARGIN = 170, 10
 
@@ -59,20 +55,20 @@ class Renderer:
         x, y, yaw, v, _, v_lat = state
 
         def screen_pos(p):
-            return SIZE[0] / 2 + (p[0] - x) * SCALE, SIZE[1] / 2 - (p[1] - y) * SCALE
+            return SIZE[0] / 2 + (p[0] - x) * 8, SIZE[1] / 2 - (p[1] - y) * 8  # 8 px per m
 
         surf = self.surface
-        surf.fill(GRASS)
+        surf.fill((40, 110, 50))
         near = np.linalg.norm(track.centerline - (x, y), axis=1) < 70
         n = len(track.centerline)
         for i in np.flatnonzero(near):
             j = (i + 1) % n
             quad = [track.left[i], track.left[j], track.right[j], track.right[i]]
-            pygame.draw.polygon(surf, ROAD, [screen_pos(p) for p in quad])
+            pygame.draw.polygon(surf, (70, 70, 75), [screen_pos(p) for p in quad])
             pygame.draw.line(surf, EDGE, screen_pos(track.left[i]), screen_pos(track.left[j]), 2)
             pygame.draw.line(surf, EDGE, screen_pos(track.right[i]), screen_pos(track.right[j]), 2)
             for wall in (track.left_wall, track.right_wall):
-                pygame.draw.line(surf, WALL, screen_pos(wall[i]), screen_pos(wall[j]), 4)
+                pygame.draw.line(surf, (150, 150, 160), screen_pos(wall[i]), screen_pos(wall[j]), 4)
 
         # checkered start line across the road at the first centerline point
         for k in range(START_SQUARES):
@@ -84,9 +80,9 @@ class Renderer:
         self.overlay.fill((0, 0, 0, 0))
         for ang, dist in zip(yaw + lidar.ANGLES, hits):
             end = screen_pos((x + dist * np.cos(ang), y + dist * np.sin(ang)))
-            pygame.draw.line(self.overlay, RAY, screen_pos((x, y)), end, 1)
+            pygame.draw.line(self.overlay, (255, 220, 0, 70), screen_pos((x, y)), end, 1)
             if dist < lidar.RANGE:
-                pygame.draw.circle(self.overlay, HIT, end, 3)
+                pygame.draw.circle(self.overlay, (255, 220, 0, 170), end, 3)
         surf.blit(self.overlay, (0, 0))
 
         c, s = np.cos(yaw), np.sin(yaw)
@@ -103,7 +99,7 @@ class Renderer:
             )
         if env.grass_steps:
             grass = f"grass {env.grass_steps * car.DT:4.1f} / {GRASS_TIME:.0f} s"
-            surf.blit(self.font.render(grass, True, WARN), (10, 54))
+            surf.blit(self.font.render(grass, True, (255, 60, 60)), (10, 54))
 
         if self.mode == "human":  # recorded videos should not show the keys
             keys = "arrows drive   down brakes, then reverses   esc quits"

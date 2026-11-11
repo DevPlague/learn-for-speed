@@ -4,15 +4,13 @@ import time
 
 import numpy as np
 
-from sim import car
-from sim.env import RacingEnv
-from sim.track import generate_track, lookahead
+from sim.env import TRAIN_SEED_MIN, RacingEnv
+from sim.track import generate_track, lookahead, pursuit_steer
 
 
 def driver(env):
-    x, y = lookahead(env.track, env.idx, env.state[:2], env.state[2], [10.0])[0]
-    steer = np.arctan2(2 * car.WHEELBASE * y, x * x + y * y) / car.MAX_STEER
-    return np.array([steer, np.clip(0.5 * (8.0 - env.state[3]), -1, 1)])
+    point = lookahead(env.track, env.idx, env.state[:2], env.state[2], [10.0])[0]
+    return np.array([pursuit_steer(point), np.clip(0.5 * (8.0 - env.state[3]), -1, 1)])
 
 
 def main(steps=20_000):
@@ -30,7 +28,7 @@ def main(steps=20_000):
     for difficulty in (0.0, 0.5, 1.0):
         start = time.perf_counter()
         for seed in range(20):
-            generate_track(100_000 + seed, difficulty)
+            generate_track(TRAIN_SEED_MIN + seed, difficulty)
         ms = 1e3 * (time.perf_counter() - start) / 20
         print(f"generate_track difficulty {difficulty} {ms:.0f} ms")
 
