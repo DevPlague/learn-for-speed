@@ -116,7 +116,7 @@ make run CMD="python -m evaluation.plots bars --evals ppo=runs/eval_ppo_val/eval
 
 ## Demo videos (T14)
 
-`evaluation/demo.py` lets several policies drive the same track at once and joins their views left to right in one MP4 at 20 fps. Each view is S1's renderer with the lidar rays, the minimap and the speed, lap and time display. A car that finishes keeps its last frame until the others are done. Videos go to `videos/`, which is never committed. Copy the good ones to the shared drive.
+`evaluation/demo.py` lets several policies drive the same track at once and joins their views left to right in one MP4 at 20 fps. Each view is labeled at the bottom with the policy name and, once that car is done, its outcome. The view is S1's renderer with the lidar rays, the minimap and the speed, lap and time display. A car that finishes keeps its last frame until the others are done. Videos go to `videos/`, which is never committed. Copy the good ones to the shared drive.
 
 ```bash
 make run CMD="python -m evaluation.demo --policies ppo pure_pursuit --model runs/mvp_s0/best_model.zip --seed 1000"

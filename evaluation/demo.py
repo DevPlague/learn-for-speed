@@ -16,6 +16,24 @@ from sim.env import RacingEnv
 
 os.environ.setdefault("SDL_VIDEODRIVER", "dummy")  # no window, works headless and in Docker
 FPS = 20  # one frame per env step, the env runs at 20 steps per second
+_FONT = None
+
+
+def label(frame, text):
+    """Frame with `text` in a dark box at the bottom centre, so each view names its policy."""
+    import pygame  # lazy like the renderer, the font needs pygame initialised
+
+    global _FONT
+    if _FONT is None or not pygame.font.get_init():  # env.close() may quit pygame
+        pygame.font.init()
+        _FONT = pygame.font.SysFont("monospace", 22, bold=True)
+    surf = pygame.surfarray.make_surface(frame.swapaxes(0, 1))
+    img = _FONT.render(text, True, (255, 255, 255))
+    x = (surf.get_width() - img.get_width()) // 2
+    y = surf.get_height() - img.get_height() - 12  # bottom, clear of the renderer HUD on top
+    pygame.draw.rect(surf, (0, 0, 0), (x - 8, y - 3, img.get_width() + 16, img.get_height() + 6))
+    surf.blit(img, (x, y))
+    return pygame.surfarray.array3d(surf).swapaxes(0, 1)
 
 
 def record(policies, seed, difficulty, max_steps=2400):
@@ -39,6 +57,9 @@ def record(policies, seed, difficulty, max_steps=2400):
                 d["frame"] = d["env"].render()
                 if terminated or truncated:
                     outcomes[d["name"]] = outcome(info)
+                d["frame"] = label(
+                    d["frame"], f"{d['name']}  {outcomes.get(d['name'], '')}".strip()
+                )
             row.append(d["frame"])
         frames.append(np.hstack(row))
         if len(outcomes) == len(drivers):
