@@ -110,7 +110,7 @@ With the wheels at full lock, grip ends at $\sqrt{G L / \tan\delta_{max}} = 6.05
 The car is on grass when $|lateral| > w/2$, see the track section. This changes three things in the step above, the drag $D$, the grip $G$ and the yaw limit $Y$. The flag comes from the end of the previous step, so grass takes effect one step late, about 1.1 m of travel at most.
 
 ## Track geometry
-Built in `sim/track.py` with NumPy and scipy, once per reset. The same seed and difficulty $d$ always give the same track.
+Built in `sim/track.py` with NumPy and scipy, once per reset. The same track seed and difficulty $d$ always give the same track.
 
 1. **Control points.** $k = \mathrm{round}(6 + 6d)$ points around a circle of radius $R_0 = 70$ m, with $\epsilon_i \sim U(-0.3, 0.3)$, $\xi_i \sim U(-1, 1)$ and noise $a = 0.1 + 0.4d$. Difficulty is continuous, $k$ takes the 7 values 6 to 12 and $a$ goes from 0.1 to 0.5.
 $$\theta_i = \frac{2\pi(i + \epsilon_i)}{k} \qquad r_i = R_0(1 + a\,\xi_i)$$
@@ -125,7 +125,7 @@ $$\theta_i = \frac{2\pi(i + \epsilon_i)}{k} \qquad r_i = R_0(1 + a\,\xi_i)$$
 
 After 50 rejected tries `generate_track` raises an error. This has not happened in testing.
 
-Measured on validation seeds 1000 to 1049, the difficulty now changes the track as intended.
+Measured on validation track seeds 1000 to 1049, the difficulty now changes the track as intended.
 
 | Difficulty | Control points | Points tighter than 25 m | Total turning, in laps | Generation |
 |---|---|---|---|---|
@@ -211,7 +211,7 @@ The next episode starts on the start line, at the first centerline point, stoppe
 | Slip is observed | A real car can estimate it from its motion sensors, and the agent must know when it slides |
 | Sensors only, no track map in the observation | The agent must drive from what its lidar sees |
 | Barriers one road width past the edges | The sensor still reads something from the grass |
-| Rust for the per-step physics, Python for track generation | Step speed, and every seed keeps its track |
+| Rust for the per-step physics, Python for track generation | Step speed, and every track seed keeps its track |
 | Constants in Rust | One source of truth next to the equations |
 | Body-frame update, not a rotation of the velocity | No speed loss in gripping corners, and it matches the textbook equations |
 

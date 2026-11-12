@@ -9,6 +9,8 @@ import csv
 from functools import partial
 from pathlib import Path
 
+import gymnasium as gym
+import numpy as np
 import torch
 import yaml
 from stable_baselines3 import PPO
@@ -29,12 +31,38 @@ def load_config(path):
     return cfg
 
 
-def make_env(weights, track_seed=None, difficulty=0.0):
-    return Monitor(RaceReward(RacingEnv(track_seed, difficulty), weights))
+def make_env(weights, track_seed=None, difficulty=0.0, mix=0.0):
+    env = RaceReward(RacingEnv(track_seed, difficulty), weights)
+    if mix:
+        env = MixedDifficulty(env, mix)
+    return Monitor(env)
+
+
+class MixedDifficulty(gym.Wrapper):
+    """Curriculum level in `difficulty`. A share `mix` of the episodes draws its track
+    difficulty uniformly below the level, the rest uses the level itself, so the agent keeps
+    the easier tracks while it learns the harder ones.
+    """
+
+    def __init__(self, env, mix):
+        super().__init__(env)
+        self.mix = mix
+        self.difficulty = env.unwrapped.difficulty  # the curriculum sets it, see ValCurveCallback
+        self.rng = np.random.default_rng()
+
+    def reset(self, *, seed=None, options=None):
+        if seed is not None:
+            self.rng = np.random.default_rng(seed)
+        below = self.rng.random() < self.mix
+        level = self.rng.uniform(0, self.difficulty) if below else self.difficulty
+        self.env.unwrapped.difficulty = level
+        return self.env.reset(seed=seed, options=options)
 
 
 def make_train_env(cfg):
-    factory = partial(make_env, RewardWeights(**cfg["reward"]), difficulty=cfg["difficulty"])
+    mix = (cfg.get("curriculum") or {}).get("mix", 0.0)
+    weights = RewardWeights(**cfg["reward"])
+    factory = partial(make_env, weights, difficulty=cfg["difficulty"], mix=mix)
     # one env step costs about 60 us, so subprocess messaging costs more than it saves.
     # One process per run leaves the other cores free to train several training seeds at once
     env = DummyVecEnv([factory] * cfg["n_envs"])

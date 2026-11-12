@@ -6,7 +6,8 @@ import yaml
 
 import learning.train as train_module
 from evaluation.evaluate import METRICS, ppo_policy
-from learning.train import ValCurveCallback, load_config, make_train_env
+from learning.reward import RewardWeights
+from learning.train import ValCurveCallback, load_config, make_env, make_train_env
 from sim.env import RacingEnv
 
 
@@ -99,3 +100,16 @@ def test_configs_build_their_reward_weights(name):
     cfg = load_config(f"configs/{name}.yaml")
     train_module.RewardWeights(**cfg["reward"])
     assert np.isfinite(cfg["ppo"]["learning_rate"])
+
+
+def test_mixed_difficulty_keeps_the_level_for_part_of_the_episodes_and_draws_below_it():
+    env = make_env(RewardWeights(), difficulty=0.0, mix=0.5)
+    env.set_wrapper_attr("difficulty", 0.5)  # what the curriculum calls through Monitor
+    levels = []
+    for i in range(40):
+        env.reset(seed=i)
+        levels.append(env.unwrapped.difficulty)
+    at_level = sum(level == 0.5 for level in levels)
+    assert 10 <= at_level <= 30
+    assert all(0.0 <= level <= 0.5 for level in levels)
+    assert env.get_wrapper_attr("difficulty") == 0.5

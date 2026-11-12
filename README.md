@@ -108,6 +108,7 @@ Every command runs from the repo folder. `make help` lists them all, and variabl
 | Intervals and paired tests between evals | `make run CMD="python -m evaluation.stats ppo=runs/eval_ppo_val/eval.json pp=runs/eval_pure_pursuit_val/eval.json"` |
 | Learning curve over training seeds | `make run CMD="python -m evaluation.plots curve --runs runs/mvp_s0 runs/mvp_s1 runs/mvp_s2 --label mvp"` |
 | Bar chart and failure plots | `evaluation.plots bars --evals name=eval.json ...` and `evaluation.plots failures --policy ppo --model runs/mvp_s1/model.zip` |
+| Watch a run drive 6 tracks, checkpoint after checkpoint | `make run CMD="python -m learning.watch --run runs/mvp_s0 --tracks 6"` |
 | Side by side video into `videos/` | `make run CMD="python -m evaluation.demo --policies ppo pure_pursuit --model runs/mvp_s0/best_model.zip --seed 1000"` |
 | Dashboard into `runs/dashboard/index.html`, with validation and statistics at difficulty 0, 0.5 and 1 | `make dashboard RUNS="mvp_crawl_s0 mvp_crawl_s1 mvp_crawl_s2"` |
 | Any command inside the env | `make run CMD="python x.py"` |
@@ -139,6 +140,8 @@ One YAML in `configs/` per experiment, and its file name is the run name. To try
 | `total_timesteps`, `n_envs` | Training length and parallel envs |
 | `difficulty` | Track difficulty the agent trains on, the starting one with a curriculum |
 | `curriculum.step`, `curriculum.threshold` | Optional. Raise the difficulty by `step` each time the validation lap rate reaches `threshold` |
+| `curriculum.mix` | Optional. Share of training episodes whose difficulty is drawn uniformly below the current one |
+| `reward.overspeed` | Optional. Penalty per step for driving faster than the car could still brake from for the corners within lidar range |
 | `checkpoint_freq` | Steps between `checkpoints/*.zip` |
 | `eval.freq`, `eval.tracks` | Validation every so many steps, on the first tracks from track seed 1000. Fills `val_curve.csv` and picks `best_model.zip` |
 | `reward.*` | Weights of `RaceReward` in `learning/reward.py`, progress, time, jitter, grass, idle, crawl, off_road, stuck and lap |
@@ -153,6 +156,8 @@ One YAML in `configs/` per experiment, and its file name is the run name. To try
 | `mvp_crawl` | `mvp` with crawl instead of idle | about 5 minutes |
 | `mvp_curriculum` | `mvp_crawl` with the adaptive curriculum from difficulty 0 to 1 | about 5 minutes |
 | `mvp_curriculum_4m` | `mvp_curriculum` with 4M steps | about 15 minutes for 3 training seeds at once |
+| `exp_overspeed_4m` | `mvp_curriculum_4m` with the overspeed penalty | about 15 minutes for 3 training seeds at once |
+| `exp_overspeed_mix_4m` | `exp_overspeed_4m` with mixed difficulties, all 3 training seeds lap 92% or more at difficulty 1 | about 17 minutes for 3 training seeds at once |
 
 ## Driving keys
 

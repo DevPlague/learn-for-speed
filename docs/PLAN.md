@@ -43,7 +43,7 @@ If the deadline is earlier, cut from the bottom: Stretch, then training seeds (k
 **Doing:** T09 (S2)  |  **Review:** none
 
 **Backlog**
-- [ ] T09 (S2) Curriculum + procedural tracks, check it reaches full difficulty. Adaptive curriculum in `ValCurveCallback` and `configs/mvp_curriculum.yaml`. At 4M steps (`mvp_curriculum_4m`) 2 of 3 training seeds reach difficulty 1 and lap 100% of validation tracks 1000 to 1049 there, training seed 2 stays at 0.25 and fails by leaving the road
+- [ ] T09 (S2) Curriculum + procedural tracks, check it reaches full difficulty. Adaptive curriculum in `ValCurveCallback` and `configs/mvp_curriculum.yaml`. With the overspeed penalty and mixed difficulties (`exp_overspeed_mix_4m`, branch exp/lookahead) all 3 training seeds reach difficulty 1 and lap 98%, 96% and 92% there on validation tracks 1050 to 1099, never used for model selection. Candidate for T11
 - [ ] T11 (S2) Final runs: 3 training seeds of the curriculum config
 - [ ] T13 (S3) Failure analysis on 3 test tracks with the T11 model (curve and validation analysis done)
 - [ ] T15 Gate 2 decision (stretch or not)

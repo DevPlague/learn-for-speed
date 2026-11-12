@@ -1,8 +1,11 @@
+import numpy as np
 import pytest
 
 from evaluation.baselines import PurePursuitPolicy
-from learning.reward import DEFAULT_WEIGHTS, RaceReward, RewardWeights
+from learning.reward import DEFAULT_WEIGHTS, RaceReward, RewardWeights, allowed_speed
+from sim import car
 from sim.env import RacingEnv
+from sim.track import generate_track
 
 NONE = dict.fromkeys(RewardWeights.__dataclass_fields__, 0.0)
 
@@ -74,3 +77,28 @@ def test_a_lap_pays_the_bonus_and_reports_success():
         obs, reward, terminated, truncated, info = env.step(policy(obs))
         done = terminated or truncated
     assert info["is_success"] is True and reward == 5.0
+
+
+def test_allowed_speed_drops_before_tight_corners_and_never_exceeds_top_speed():
+    track = generate_track(1000, 1.0)
+    allowed = allowed_speed(track)
+    assert allowed.max() <= car.MAX_SPEED + 1e-9
+    assert allowed.min() < 0.7 * car.MAX_SPEED  # difficulty 1 has corners near 12 m
+    # one meter on, the car may have lost at most what braking over that meter takes away
+    nxt = np.roll(allowed, -1)
+    assert np.all(allowed**2 <= nxt**2 + 2 * car.BRAKE + 1e-6)
+
+
+def test_overspeed_costs_only_above_the_allowed_speed():
+    env = make_env(**{**NONE, "overspeed": 1.0})
+    allowed = env.get_wrapper_attr("_allowed")
+    allowed[:] = 5.0  # as if a tight corner were just ahead everywhere
+    rewards, speeds = [], []
+    for _ in range(40):
+        _, reward, *_, info = env.step([0.0, 1.0])
+        rewards.append(reward)
+        speeds.append(info["speed"])
+    for reward, speed in zip(rewards, speeds, strict=True):
+        assert reward == pytest.approx(-max(speed - 5.0, 0.0) / car.MAX_SPEED)
+    assert rewards[0] == 0.0
+    assert rewards[-1] < 0
