@@ -94,7 +94,17 @@ def test_only_the_reward_is_normalized():
 
 
 @pytest.mark.parametrize(
-    "name", ["tiny", "mvp", "mvp_crawl", "mvp_curriculum", "probe_mvp", "probe_ent", "probe_crawl"]
+    "name",
+    [
+        "tiny",
+        "mvp",
+        "mvp_crawl",
+        "mvp_curriculum",
+        "final",
+        "probe_mvp",
+        "probe_ent",
+        "probe_crawl",
+    ],
 )
 def test_configs_build_their_reward_weights(name):
     cfg = load_config(f"configs/{name}.yaml")

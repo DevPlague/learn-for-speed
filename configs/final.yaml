@@ -1,4 +1,4 @@
-# Experiment on exp/lookahead. exp_overspeed_4m.yaml plus mixed difficulties, half of the episodes
+# Final config (T11), frozen. exp_overspeed_4m.yaml plus mixed difficulties, half of the episodes
 # draw their track difficulty uniformly below the curriculum level (MixedDifficulty in learning/train.py).
 total_timesteps: 4000000
 n_envs: 8

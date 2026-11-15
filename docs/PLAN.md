@@ -40,16 +40,13 @@ If the deadline is earlier, cut from the bottom: Stretch, then training seeds (k
 - Done = works via `make`, tests/lint pass, someone else looked at it.
 
 ## Tasks
-**Doing:** T09 (S2)  |  **Review:** none
+**Doing:** T15, T16  |  **Review:** exp/lookahead
 
 **Backlog**
-- [ ] T09 (S2) Curriculum + procedural tracks, check it reaches full difficulty. Adaptive curriculum in `ValCurveCallback` and `configs/mvp_curriculum.yaml`. With the overspeed penalty and mixed difficulties (`exp_overspeed_mix_4m`, branch exp/lookahead) all 3 training seeds reach difficulty 1 and lap 98%, 96% and 92% there on validation tracks 1050 to 1099, never used for model selection. Candidate for T11
-- [ ] T11 (S2) Final runs: 3 training seeds of the curriculum config
-- [ ] T13 (S3) Failure analysis on 3 test tracks with the T11 model (curve and validation analysis done)
 - [ ] T15 Gate 2 decision (stretch or not)
 - [ ] T16 Report draft, slides, two demo rehearsals (live and offline fallback)
 
-**Final model.** The config is frozen when all 3 training seeds learn, none under 70% laps on validation track seeds 1050 and up (never used for model selection), and the curriculum reaches difficulty 1. Only then the test split runs, once, before 22 Nov. Code freeze is 29 Nov.
+**Final model.** Met on 2026-11-15 with `configs/final.yaml`. The config is frozen when all 3 training seeds learn, none under 70% laps on validation track seeds 1050 and up (never used for model selection), and the curriculum reaches difficulty 1. Only then the test split runs, once, before 22 Nov. Code freeze is 29 Nov.
 
 **Done**
 - [x] T02 Code layout in CLAUDE.md and docs/SPEC.md (2026-11-02)
@@ -64,6 +61,9 @@ If the deadline is earlier, cut from the bottom: Stretch, then training seeds (k
 - [x] T08 (S2) First MVP run on gentle tracks, 3 training seeds, evaluated on validation. Gate 1 passes, MVP 70% not met because one training seed never starts (2026-11-09)
 - [x] T18 (S2) Local dashboard with training curves, validation and test tables, synced replay grid and physics plots, built from runs/ (2026-11-09)
 - [x] T14 (S3) Videos side by side vs pure pursuit, failure case, lidar view, trajectory figure (2026-11-10)
+- [x] T09 (S2) Adaptive curriculum with the overspeed penalty and mixed difficulties, all 3 training seeds reach difficulty 1 (2026-11-15)
+- [x] T11 (S2) Final runs, 3 training seeds of `configs/final.yaml`, 95.7% laps on test at difficulty 1 (2026-11-15)
+- [x] T13 (S3) Failure analysis on 3 test tracks with the T11 model, in docs/REPORT_EVALUATION.md (2026-11-15)
 
 ## Risks
 | Risk | Likelihood | Mitigation |
