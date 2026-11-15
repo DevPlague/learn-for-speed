@@ -165,27 +165,27 @@ The final table compares the PPO configs and two baselines. Testing every pair a
 
 - **Three training seeds.** Enough to see that training is unstable, far too few to test differences between training methods at training seed level. A Mann-Whitney test with 3 against 3 cannot reach p < 0.05 at all, its smallest possible p is 0.1. Our tests are per track, so they speak about the trained agents we have, and the training seed t interval shows how wide the uncertainty about the method is.
 - **Power.** With 50 tracks a lap rate interval is about ± 0.1 wide. The final test split uses 200 tracks to bring that to about ± 0.07. Small real differences between PPO configs may still not reach significance, which is a type II error risk (slide 38), not proof of equality.
-- **Selection.** `best_model.zip` is chosen on validation tracks 1000 to 1019, so validation numbers are slightly optimistic. Only test numbers go in the final table.
+- **Selection.** `best_model.zip` is chosen on validation tracks 1000 to 1019, so validation numbers are slightly optimistic. Only test numbers go in the final table, and the final config was also checked on validation tracks 1050 to 1099 before the test ran.
 - **Deterministic policy.** Each policy is run once per track with deterministic actions. The variation we measure comes from tracks and training seeds, not from action noise.
 
-## 8. Current results with intervals and tests
+## 8. Final results with intervals and tests
 
-Validation tracks 1000 to 1049, 3 training seeds of `mvp`. Full output in `runs/stats_val_d0.md` and `runs/stats_val_d1.md`.
+Test tracks 10000 to 10199, run once, 3 training seeds of the frozen config `final`. Full output in `results/stats_test_d0.md` and `results/stats_test_d1.md`.
 
-| Difficulty | Policy | Lap rate | 95% CI over tracks | Per training seed | Progress |
-|---|---|---|---|---|---|
-| 0 | PPO mvp | 0.61 | [0.58, 0.65] | 1.00, 0.00, 0.84 | 0.64 |
-| 0 | pure pursuit | 1.00 | [0.93, 1.00] | - | 1.00 |
-| 0 | random | 0.00 | [0.00, 0.07] | - | 0.00 |
-| 1 | PPO mvp | 0.49 | [0.43, 0.56] | 0.78, 0.00, 0.70 | 0.59 |
-| 1 | pure pursuit | 1.00 | [0.93, 1.00] | - | 1.00 |
-| 1 | random | 0.00 | [0.00, 0.07] | - | 0.00 |
+| Policy | Difficulty | Laps | 95% CI | Off track | Stuck | Lap time |
+|---|---|---|---|---|---|---|
+| PPO `final`, 3 training seeds | 0 | 100% | [1.00, 1.00] | 0% | 0% | 24.2 s |
+| pure pursuit | 0 | 100% | [0.98, 1.00] | 0% | 0% | 29.5 s |
+| random | 0 | 0% | [0.00, 0.02] | 0% | 100% | - |
+| PPO `final`, 3 training seeds | 1 | 95.7% | [0.94, 0.97] | 3.2% | 1.2% | 36.3 s |
+| pure pursuit | 1 | 100% | [0.98, 1.00] | 0% | 0% | 40.7 s |
+| random | 1 | 0% | [0.00, 0.02] | 0% | 100% | - |
 
-Friedman rejects at both difficulties (p < 0.0001), so the three policies differ. Pairwise, Holm corrected
-
-- **PPO against random.** Training seeds 0 and 2 lap significantly more tracks (McNemar, 50 and 42 discordant tracks at difficulty 0, p < 0.0001). Training seed 1 is indistinguishable from random, 0 discordant tracks. Progress is higher (Wilcoxon p < 0.0001). Gate 1 holds for the method in two of three runs.
-- **PPO against pure pursuit.** At difficulty 0 training seed 0 ties with pure pursuit (no discordant track), training seed 2 laps fewer tracks (p 0.023 after Holm). At difficulty 1 every PPO training seed laps significantly fewer (p ≤ 0.002 after Holm). On tracks both finish, PPO is about 5 s faster (Wilcoxon p < 0.0001).
-- **Reading.** PPO learns a faster but less reliable driver than the hand-written controller, and whether training works at all depends on the training seed. Both statements are now backed by tests, not only by means.
+Friedman rejects equal performance at both difficulties (p < 0.0001). Pairwise, Holm corrected
+- **PPO against random.** Every training seed laps more tracks (McNemar, 187 to 194 discordant tracks at difficulty 1, p < 0.0001).
+- **PPO against pure pursuit.** At difficulty 0 there is no discordant track. At difficulty 1 pure pursuit laps 6, 7 and 13 tracks that training seeds 1, 0 and 2 miss and never the reverse (p 0.03, 0.03 and 0.0007). On tracks both finish PPO is 5.4 s faster at difficulty 0 and 4.4 s at difficulty 1 (Wilcoxon p < 0.0001).
+- **Training seeds.** Per training seed the lap rate at difficulty 1 is 96.5%, 97% and 93.5%, and the t interval over training seeds is [0.91, 1.00]. The method now works for every training seed, not only for a lucky one.
+- **Reading.** PPO is a faster driver than the hand-written controller and slightly less reliable on hard tracks. Unlike the MVP, where one training seed never learned, the t interval over training seeds is now narrow.
 
 ## 9. Checklist for any reported number
 
