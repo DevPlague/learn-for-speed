@@ -11,10 +11,10 @@ from pathlib import Path
 import numpy as np
 
 from evaluation.baselines import PurePursuitPolicy, RandomPolicy
-from sim.env import RacingEnv
+from sim.env import TRAIN_SEED_MIN, RacingEnv, outcome
 
 VAL_SEEDS = range(1000, 2000)
-TEST_SEEDS = range(10_000, 100_000)
+TEST_SEEDS = range(10_000, TRAIN_SEED_MIN)
 METRICS = (
     "lap_success_rate",
     "off_track_rate",
@@ -38,28 +38,26 @@ def check_seeds(seeds):
         raise ValueError(f"seeds outside validation and test splits {bad[:5]}")
 
 
-def run_episode(policy, seed, env):
-    """One episode on one track. Returns the final info, the outcome and the car path."""
+def run_episode(policy, seed, env, on_step=None):
+    """One episode on one track. Returns the final info, the outcome and the car path.
+
+    `on_step(action)` runs after every step, for callers that record more than the path.
+    """
     env.track_seed = seed
     obs, info = env.reset(seed=seed)
     path, speeds = [], []
     terminated = truncated = False
     while not (terminated or truncated):
-        obs, _, terminated, truncated, info = env.step(policy(obs))
+        action = policy(obs)
+        obs, _, terminated, truncated, info = env.step(action)
         path.append(np.array(env.state[:2]))
         speeds.append(abs(info["speed"]))
-    if info["lap_done"]:
-        outcome = "lap"
-    elif info["off_road"]:
-        outcome = "off_road"
-    elif info["stuck"]:
-        outcome = "stuck"
-    else:
-        outcome = "timeout"
+        if on_step:
+            on_step(action)
     return {
         "seed": seed,
         "info": info,
-        "outcome": outcome,
+        "outcome": outcome(info),
         "path": np.array(path),
         "speeds": np.array(speeds),
     }
@@ -70,8 +68,7 @@ def evaluate(policy, seeds, difficulty, env=None):
     check_seeds(seeds)
     env = RacingEnv(difficulty=difficulty) if env is None else env
     env.difficulty = difficulty
-    laps, offs, stucks, lap_times, speeds, progress = [], [], [], [], [], []
-    episodes = []
+    episodes, speeds = [], []
     for seed in seeds:
         ep = run_episode(policy, seed, env)
         info = ep["info"]
@@ -84,21 +81,17 @@ def evaluate(policy, seeds, difficulty, env=None):
                 "lap_time": lap_time,
             }
         )
-        laps.append(info["lap_done"])
-        offs.append(info["off_road"])
-        stucks.append(info["stuck"])
-        if info["lap_done"]:
-            lap_times.append(info["lap_time"])
         speeds.append(np.mean(ep["speeds"]))
-        progress.append(info["progress"])
+    outcomes = [e["outcome"] for e in episodes]
+    lap_times = [e["lap_time"] for e in episodes if e["lap_time"] is not None]
     return {
         "n_episodes": len(seeds),
-        "lap_success_rate": float(np.mean(laps)),
-        "off_track_rate": float(np.mean(offs)),
-        "stuck_rate": float(np.mean(stucks)),
+        "lap_success_rate": outcomes.count("lap") / len(seeds),
+        "off_track_rate": outcomes.count("off_road") / len(seeds),
+        "stuck_rate": outcomes.count("stuck") / len(seeds),
         "mean_lap_time": float(np.mean(lap_times)) if lap_times else None,
         "mean_speed": float(np.mean(speeds)),
-        "mean_progress": float(np.mean(progress)),
+        "mean_progress": float(np.mean([e["progress"] for e in episodes])),
         "episodes": episodes,
     }
 
@@ -142,14 +135,16 @@ def make_policy(name, env, model=None):
         return ppo_policy(model)
     if name == "pure_pursuit":
         return PurePursuitPolicy(env)
-    return RandomPolicy(seed=0)
+    if name == "random":
+        return RandomPolicy(seed=0)
+    raise ValueError(f"unknown policy {name}")
 
 
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--policy", choices=["random", "pure_pursuit", "ppo"], required=True)
     p.add_argument("--model", nargs="+", default=[], help="one zip per training seed, ppo only")
-    p.add_argument("--split", choices=["val", "test"], default="test")
+    p.add_argument("--split", choices=["val", "test"], default="val")
     p.add_argument("--n", type=int, default=50)
     p.add_argument("--difficulty", type=float, default=0.5)
     p.add_argument("--out", default=None, help="output folder, default runs/eval_<policy>_<split>")

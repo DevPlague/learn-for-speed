@@ -11,10 +11,8 @@ TOL = 1e-9
 
 
 def test_constants_match():
-    for name in ("DT", "WHEELBASE", "MAX_STEER", "STEER_RATE", "MAX_SPEED", "REVERSE_SPEED"):
-        assert getattr(car, name) == getattr(ref, name)
-    for name in ("ACCEL", "BRAKE", "DRAG", "GRIP", "YAW_GRIP", "GRASS_DRAG", "GRASS_GRIP"):
-        assert getattr(car, name) == getattr(ref, name)
+    for name in car.__all__[:13]:
+        assert getattr(car, name) == getattr(ref, name), name
     assert lidar.N_RAYS == ref.N_RAYS and lidar.RANGE == ref.RANGE
     assert np.allclose(lidar.ANGLES, ref.ANGLES, atol=TOL)
 

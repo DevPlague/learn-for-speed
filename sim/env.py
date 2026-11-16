@@ -17,14 +17,21 @@ SLIP_SCALE = car.MAX_SPEED  # m/s of sideways slip that maps to 1 in the observa
 
 MAX_TIME = 120.0  # s, then truncated
 GRASS_TIME = 10.0  # s in a row on grass, then failed
-STUCK_TIME = 10.0  # s without gaining STUCK_GAIN meters of progress, then failed
-STUCK_GAIN = 2.0
 TRAIN_SEED_MIN = 100_000
 
 
 def default_reward(dprogress, on_grass, off_road, lap_done):
-    """Placeholder until S2 tunes the real reward. dprogress is a fraction of a lap."""
+    """Reward of the bare env. Training replaces it with learning.reward.RaceReward."""
     return 10.0 * dprogress - 0.01 - 0.05 * on_grass - 5.0 * off_road + 5.0 * lap_done
+
+
+def outcome(info):
+    """How a finished episode ended, lap, off_road, stuck or timeout."""
+    if info["lap_done"]:
+        return "lap"
+    if info["off_road"]:
+        return "off_road"
+    return "stuck" if info["stuck"] else "timeout"
 
 
 class RacingEnv(gym.Env):
@@ -59,12 +66,13 @@ class RacingEnv(gym.Env):
         self.ref_step = 0
         self.on_grass = False
         self.grass_steps = 0
+        self.lateral = 0.0
         self.hits = self.core.cast(*self.state[:3])
         return self._obs(), self._info(False, False, False)
 
     def step(self, action):
         action = np.asarray(action, dtype=np.float64)
-        self.state, self.hits, self.idx, frac, lateral = self.core.step(
+        self.state, self.hits, self.idx, frac, self.lateral = self.core.step(
             self.state, action, self.idx, self.on_grass
         )
         self.steps += 1
@@ -73,14 +81,14 @@ class RacingEnv(gym.Env):
         self.last_frac = frac
         self.progress += dprogress
 
-        self.on_grass = abs(lateral) > t.width / 2
+        self.on_grass = abs(self.lateral) > t.width / 2
         self.grass_steps = self.grass_steps + 1 if self.on_grass else 0
-        hit_wall = abs(lateral) > WALL_OFFSET
+        hit_wall = abs(self.lateral) > WALL_OFFSET
         off_road = hit_wall or self.grass_steps * car.DT > GRASS_TIME
         lap_done = self.progress >= 1.0
-        if self.progress - self.ref_progress >= STUCK_GAIN / t.length:
+        if self.progress - self.ref_progress >= 2.0 / t.length:  # 2 m gained resets the clock
             self.ref_progress, self.ref_step = self.progress, self.steps
-        stuck = (self.steps - self.ref_step) * car.DT >= STUCK_TIME
+        stuck = (self.steps - self.ref_step) * car.DT >= 10.0
         terminated = bool(off_road or lap_done or stuck)
         truncated = bool(not terminated and self.steps * car.DT >= MAX_TIME)
 

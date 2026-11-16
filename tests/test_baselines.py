@@ -1,39 +1,40 @@
+from types import SimpleNamespace
+
 import numpy as np
+import pytest
 
 from evaluation.baselines import PurePursuitPolicy, RandomPolicy
+from evaluation.evaluate import run_episode
 from sim.env import RacingEnv
+from sim.track import _build
 
 
-def run(env, policy, seed):
-    obs, info = env.reset(seed=seed)
-    done = False
-    while not done:
-        obs, _, term, trunc, info = env.step(policy(obs))
-        done = term or trunc
-    return info
-
-
-def test_random_policy_range_and_seed():
+def test_random_policy_is_seeded_and_uniform():
     obs = np.zeros(4, dtype=np.float32)
-    a = [RandomPolicy(seed=3)(obs) for _ in range(2)]
-    b = RandomPolicy(seed=3)
-    assert np.array_equal(a[0], b(obs))
-    acts = np.array([b(obs) for _ in range(200)])
-    assert acts.shape == (200, 2)
-    assert acts.min() >= -1 and acts.max() <= 1
+    a, b = RandomPolicy(seed=3), RandomPolicy(seed=3)
+    assert np.array_equal(a(obs), b(obs))
+    assert not np.array_equal(RandomPolicy(seed=4)(obs), RandomPolicy(seed=3)(obs))
+    acts = np.array([a(obs) for _ in range(2000)])
+    assert acts.min() >= -1 and acts.max() <= 1 and abs(acts.mean()) < 0.05
 
 
-def test_pure_pursuit_action_in_range():
-    env = RacingEnv(track_seed=1000)
-    obs, _ = env.reset(seed=0)
-    pp = PurePursuitPolicy(env)
-    for _ in range(50):
-        a = pp(obs)
-        assert a.shape == (2,) and env.action_space.contains(a)
-        obs, *_ = env.step(a)
+def on_circle(radius, speed):
+    """Pure pursuit on the start of a circular road, driving at `speed`."""
+    angles = np.linspace(0, 2 * np.pi, round(2 * np.pi * radius), endpoint=False)
+    track = _build(radius * np.column_stack([np.cos(angles), np.sin(angles)]))
+    env = SimpleNamespace(track=track, idx=0)
+    env.state = np.array([*track.centerline[0], track.heading[0], speed, 0.0, 0.0])
+    return PurePursuitPolicy(env)(None)
 
 
-def test_pure_pursuit_laps_validation_tracks():
-    for seed in (1000, 1001, 1002):
-        env = RacingEnv(track_seed=seed, difficulty=0.5)
-        assert run(env, PurePursuitPolicy(env), seed=0)["lap_done"]
+def test_pure_pursuit_brakes_for_a_tight_corner_and_steers_into_it():
+    tight, wide = on_circle(15.0, 14.0), on_circle(200.0, 14.0)
+    assert tight[1] < 0 < wide[1]  # sqrt(GRIP * 15) is about 11 m/s, a wide curve allows 16
+    assert tight[0] > wide[0] > 0  # left circle, more steering when tighter
+
+
+@pytest.mark.parametrize("difficulty", [0.0, 0.5, 1.0])
+def test_pure_pursuit_laps_every_validation_track(difficulty):
+    env = RacingEnv(difficulty=difficulty)
+    outcomes = [run_episode(PurePursuitPolicy(env), s, env)["outcome"] for s in range(1000, 1005)]
+    assert outcomes == ["lap"] * 5  # the env is solvable, Gate 1 reference

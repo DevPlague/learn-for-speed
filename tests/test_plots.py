@@ -16,13 +16,12 @@ from evaluation.plots import (
 from sim.env import RacingEnv
 from tests.test_evaluate import OUTCOMES, MockEnv, zero_policy
 
-HEADER = "timesteps,lap_success_rate,mean_progress,mean_lap_time\n"
-
 
 def write_curve(folder, rows):
     folder.mkdir()
     lines = [f"{t},{lap},{prog},{'' if lt is None else lt}" for t, lap, prog, lt in rows]
-    (folder / "val_curve.csv").write_text(HEADER + "\n".join(lines) + "\n")
+    header = "timesteps,lap_success_rate,mean_progress,mean_lap_time\n"
+    (folder / "val_curve.csv").write_text(header + "\n".join(lines) + "\n")
     return folder
 
 

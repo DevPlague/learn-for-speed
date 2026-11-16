@@ -15,9 +15,11 @@ videos/
 .idea/
 .vscode/
 .env
+.graphify
 
 # Rust build output
 target/
 *.so
 .claude/settings.local.json
 .claude/
+graphify-out/

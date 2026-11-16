@@ -16,11 +16,9 @@ from pathlib import Path
 import numpy as np
 from scipy import stats
 
-ALPHA = 0.05
-
 
 def load(path):
-    """eval.json as a dict. Needs the per-track `episodes` written since the stats update."""
+    """eval.json as a dict. Needs the per-track `episodes` list."""
     data = json.loads(Path(path).read_text())
     if "episodes" not in data:
         raise ValueError(f"{path} has no per-track episodes, rerun evaluate")
@@ -62,7 +60,7 @@ def bootstrap_ci(values, confidence=0.95, n_boot=10_000, seed=0):
 
 
 def t_ci(values, confidence=0.95):
-    """Student t interval of the mean over training seeds. Wide with 3 seeds, which is honest."""
+    """Student t interval of the mean over training seeds."""
     values = np.asarray(values, dtype=float)
     if len(values) < 2:
         return (np.nan, np.nan)
@@ -92,7 +90,7 @@ def mcnemar_exact(a, b):
     """Exact McNemar on two paired 0/1 vectors. Only discordant tracks count.
 
     b10 tracks where A lapped and B did not, b01 the reverse. Under H0 both are equally likely,
-    so b10 follows Binomial(b10 + b01, 0.5). Exact because we often have fewer than 20 discordant.
+    so b10 follows Binomial(b10 + b01, 0.5).
     """
     a, b = np.asarray(a, dtype=bool), np.asarray(b, dtype=bool)
     b10, b01 = int(np.sum(a & ~b)), int(np.sum(~a & b))
@@ -153,11 +151,53 @@ def holm(pvalues):
     p = np.asarray(pvalues, dtype=float)
     order = np.argsort(p)
     adjusted = np.empty_like(p)
-    running = 0.0
-    for rank, idx in enumerate(order):
-        running = max(running, (len(p) - rank) * p[idx])
-        adjusted[idx] = min(1.0, running)
-    return [float(v) for v in adjusted]
+    adjusted[order] = np.minimum(
+        1.0, np.maximum.accumulate((len(p) - np.arange(len(p))) * p[order])
+    )
+    return adjusted.tolist()
+
+
+def pairwise_tests(evals):
+    """Paired tests between every pair of evals with Holm corrected p.
+
+    McNemar per model pair, Wilcoxon on progress and on lap time. `p` is None when a test had
+    no pairs, and such tests are left out of the Holm correction.
+    """
+    tests = []
+    for (na, a), (nb, b) in itertools.combinations(evals.items(), 2):
+        c = compare(a, b)
+        for m in c["mcnemar"]:
+            detail = f"{m['a_only']} vs {m['b_only']} discordant"
+            tests.append(
+                {
+                    "a": na,
+                    "b": nb,
+                    "test": "lap McNemar",
+                    "models": m["models"],
+                    "p": m["p"],
+                    "detail": detail,
+                }
+            )
+        for key, label in (
+            ("progress_wilcoxon", "progress Wilcoxon"),
+            ("lap_time_wilcoxon", "lap time both lapped Wilcoxon"),
+        ):
+            w = c[key]
+            detail = f"n {w['n']}, median diff {w['median_diff']:+.2f}"
+            tests.append(
+                {
+                    "a": na,
+                    "b": nb,
+                    "test": label,
+                    "models": None,
+                    "p": w["p"] if w["n"] else None,
+                    "detail": detail,
+                }
+            )
+    adjusted = iter(holm([t["p"] for t in tests if t["p"] is not None]))
+    for t in tests:
+        t["p_holm"] = None if t["p"] is None else next(adjusted)
+    return tests
 
 
 def fmt_ci(ci):
@@ -182,34 +222,15 @@ def report(evals):
                 f"|  | per seed {per_seed} | | | seed t {fmt_ci(s['lap_rate_seed_ci'])} | | |"
             )
 
-    tests = []
-    for (na, a), (nb, b) in itertools.combinations(evals.items(), 2):
-        c = compare(a, b)
-        for m in c["mcnemar"]:
-            tests.append(
-                (
-                    f"{na} vs {nb} lap McNemar models {m['models']}",
-                    m["p"],
-                    f"{m['a_only']} vs {m['b_only']} discordant",
-                )
-            )
-        for key, label in (
-            ("progress_wilcoxon", "progress"),
-            ("lap_time_wilcoxon", "lap time both lapped"),
-        ):
-            w = c[key]
-            detail = f"n {w['n']}, median diff {w['median_diff']:+.2f}"
-            tests.append((f"{na} vs {nb} {label} Wilcoxon", w["p"] if w["n"] else None, detail))
-    run = [p for _, p, _ in tests if p is not None]  # tests with no pairs are not counted in Holm
-    adjusted = iter(holm(run)) if run else iter([])
     lines += ["", "| test | detail | p | p Holm | significant |", "|---|---|---|---|---|"]
-    for label, p, detail in tests:
-        if p is None:
-            lines.append(f"| {label} | {detail} | n/a | n/a | - |")
+    for t in pairwise_tests(evals):
+        models = f" models {t['models']}" if t["models"] is not None else ""
+        label = f"{t['a']} vs {t['b']} {t['test']}{models}"
+        if t["p"] is None:
+            lines.append(f"| {label} | {t['detail']} | n/a | n/a | - |")
             continue
-        p_adj = next(adjusted)
-        sig = "yes" if p_adj < ALPHA else "no"
-        lines.append(f"| {label} | {detail} | {p:.4f} | {p_adj:.4f} | {sig} |")
+        sig = "yes" if t["p_holm"] < 0.05 else "no"
+        lines.append(f"| {label} | {t['detail']} | {t['p']:.4f} | {t['p_holm']:.4f} | {sig} |")
     if len(evals) >= 3:
         lines += [
             "",

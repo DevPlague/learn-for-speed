@@ -110,19 +110,30 @@ With the wheels at full lock, grip ends at $\sqrt{G L / \tan\delta_{max}} = 6.05
 The car is on grass when $|lateral| > w/2$, see the track section. This changes three things in the step above, the drag $D$, the grip $G$ and the yaw limit $Y$. The flag comes from the end of the previous step, so grass takes effect one step late, about 1.1 m of travel at most.
 
 ## Track geometry
-Built in `sim/track.py` with NumPy and scipy, once per reset. The same seed and difficulty $d$ always give the same track.
+Built in `sim/track.py` with NumPy and scipy, once per reset. The same track seed and difficulty $d$ always give the same track.
 
-1. **Control points.** $k = \mathrm{round}(6 + 6d)$ points around a circle of radius $R_0 = 70$ m, with $\epsilon_i \sim U(-0.3, 0.3)$, $\xi_i \sim U(-1, 1)$ and noise $a = (0.1 + 0.4d)\, 0.9^{attempt}$.
+1. **Control points.** $k = \mathrm{round}(6 + 6d)$ points around a circle of radius $R_0 = 70$ m, with $\epsilon_i \sim U(-0.3, 0.3)$, $\xi_i \sim U(-1, 1)$ and noise $a = 0.1 + 0.4d$. Difficulty is continuous, $k$ takes the 7 values 6 to 12 and $a$ goes from 0.1 to 0.5.
 $$\theta_i = \frac{2\pi(i + \epsilon_i)}{k} \qquad r_i = R_0(1 + a\,\xi_i)$$
 2. **Spline.** A periodic cubic spline through the points, so position, tangent and curvature are all continuous around the loop.
 3. **Even spacing.** Resampled by arc length, about one point per meter.
 4. **Heading.** $h_i = \mathrm{atan2}(p_{i+1} - p_{i-1})$ by central difference, with the tangent $t_i = (\cos h_i, \sin h_i)$ and the normal $n_i = (-\sin h_i, \cos h_i)$.
 5. **Edges and barriers.** The road width is $w = 8$ m and the grass gap is $g = 8$ m. Edges are at $p_i \pm n_i w/2$ and barriers at $p_i \pm n_i (w/2 + g)$, which is 12 m from the centerline.
-6. **Validity.** A candidate is rejected and redrawn, with less noise, when either rule fails.
-   - Tightest radius, from $\kappa_i = |h_{i+1} - h_i| / |p_{i+1} - p_i|$, must satisfy $1/\kappa \ge 12$ m. A curve offset by a distance larger than its radius folds on itself, which would break the inner barrier.
-   - Points over 32 m apart along the road must stay over 17 m apart in space. Since $12 + 4 + 1 = 17$, no barrier stands on another part of the road. Barriers of two road parts closer than 24 m would cross each other, which this rule allows. The closest pair found over 300 tracks is 28 m, so that case does not occur in practice.
+6. **Easing tight corners.** A curve offset by a distance larger than its radius folds on itself, which would break the inner barrier, so no corner may be tighter than 12 m. Where the turn between two segments $\tau_i$ is larger than $|p_{i+1} - p_i| / 14$, the excess moves half to each neighbour and this repeats until no excess is left. Every corner keeps its total angle and only its radius grows, and the small gap this opens at the start line is spread linearly over the whole loop. Before this step the generator redrew any tight track with 10% less noise, so 98% of the tracks at difficulty 1 ended up smoother than at 0.5.
+7. **Validity.** A candidate is rejected and redrawn, with 10% less noise, when either rule fails.
+   - Tightest radius, from $\kappa_i = |h_{i+1} - h_i| / |p_{i+1} - p_i|$, must satisfy $1/\kappa \ge 12$ m. Easing fixes about 95% of the tightest splines, the rest are redrawn.
+   - Points over 32 m apart along the road must stay over 17 m apart in space. Since $12 + 4 + 1 = 17$, no barrier stands on another part of the road. Barriers of two road parts closer than 24 m would cross each other, which this rule allows.
 
-After 50 rejected tries `generate_track` raises an error. With the noise shrinking each time this has not happened in testing.
+After 50 rejected tries `generate_track` raises an error. This has not happened in testing.
+
+Measured on validation track seeds 1000 to 1049, the difficulty now changes the track as intended.
+
+| Difficulty | Control points | Points tighter than 25 m | Total turning, in laps | Generation |
+|---|---|---|---|---|
+| 0 | 6 | 2% | 1.00 | 8 ms |
+| 0.5 | 9 | 10% | 1.29 | 13 ms |
+| 1 | 12 | 26% | 2.44 | 35 ms |
+
+Pure pursuit laps all 50 tracks at every difficulty, in 29.5 s, 32.3 s and 41.5 s.
 
 ## Position along the track
 `locate` and `frenet` in `rust/src/track.rs`.
@@ -185,23 +196,24 @@ The next episode starts on the start line, at the first centerline point, stoppe
 | Nearest point, progress, lateral offset | `locate`, `frenet` in `rust/src/track.rs` |
 | One call per env step | `TrackCore.step` in `rust/src/lib.rs` |
 | Point count, noise and redraw loop | `generate_track` in `sim/track.py` |
-| Control points, spline, even spacing | `_spline_loop` in `sim/track.py` |
-| Heading and validity | `_headings`, `_is_valid` in `sim/track.py` |
+| Corner easing | `_ease_tight_corners` in `sim/track.py` |
+| Control points, spline, even spacing | `_spline_loop`, `_resample` in `sim/track.py` |
+| Heading, radius and validity | `_headings`, `_radius`, `_is_valid` in `sim/track.py` |
 | Edges and barriers | `_build` in `sim/track.py` |
 | Progress unwrap, grass flag, end rules | `step` in `sim/env.py` |
 | Observation scaling | `_obs` in `sim/env.py` |
 
 ## Decisions
-| Decision | Why | Log |
-|---|---|---|
-| Bicycle model, not full dynamics | Forces braking for corners and stays easy to debug and explain | D05 |
-| Slip added with a separate nose limit | Fast corners should slide, and one parameter controls how much | D19 |
-| Slip is observed | A real car can estimate it from its motion sensors, and the agent must know when it slides | D19 |
-| Sensors only, no track map in the observation | The agent must drive from what its lidar sees | D17 |
-| Barriers one road width past the edges | The sensor still reads something from the grass | D18 |
-| Rust for the per-step physics, Python for track generation | Step speed, and every seed keeps its track | D20 |
-| Constants in Rust | One source of truth next to the equations | D21 |
-| Body-frame update, not a rotation of the velocity | No speed loss in gripping corners, and it matches the textbook equations | D22 |
+| Decision | Why |
+|---|---|
+| Bicycle model, not full dynamics | Forces braking for corners and stays easy to debug and explain |
+| Slip added with a separate nose limit | Fast corners should slide, and one parameter controls how much |
+| Slip is observed | A real car can estimate it from its motion sensors, and the agent must know when it slides |
+| Sensors only, no track map in the observation | The agent must drive from what its lidar sees |
+| Barriers one road width past the edges | The sensor still reads something from the grass |
+| Rust for the per-step physics, Python for track generation | Step speed, and every track seed keeps its track |
+| Constants in Rust | One source of truth next to the equations |
+| Body-frame update, not a rotation of the velocity | No speed loss in gripping corners, and it matches the textbook equations |
 
 ## What is not modelled
 Known limits, so nobody is surprised in the defense.

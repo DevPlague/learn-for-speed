@@ -1,73 +1,68 @@
 # Report draft, evaluation sections
 
-Draft text for report sections 4 (Experiments) and 5 (Failure analysis). Numbers are on **validation** tracks and only show progress. The final report replaces every table with the single **test** run (seeds 10000 and up) once T11 and T12 exist. Placeholders are marked TODO.
+Draft text for report sections 4 (Experiments) and 5 (Failure analysis). The results are the single **test** run (track seeds 10000 to 10199) of the frozen T11 config `configs/final.yaml`. Tables and figures are in `results/`.
 
 ## 4. Experiments
 
 ### Protocol
 
-Every driver is scored on tracks it never trained on. Tracks come from seeds. Training uses 100000 and up, validation 1000 to 1999 for development and model selection, test 10000 to 99999 once for the final numbers. The trained policy acts deterministically. An episode ends with a lap, off road (10 s off the road or a barrier hit), stuck (10 s without progress) or a 120 s timeout. We report lap success rate, off-track rate, stuck rate, lap time over successful laps, mean speed and mean progress. PPO is trained with 3 seeds and reported per seed and pooled. Every rate has a 95% interval and every comparison a paired test, McNemar for laps and Wilcoxon for progress and lap time, with Holm correction and a Friedman test across all policies. Section by section justification in docs/EVALUATION_STATISTICS.md.
+Every driver is scored on tracks it never trained on. Tracks come from track seeds. Training uses 100000 and up, validation 1000 to 1999 for development and model selection, test 10000 to 99999 once for the final numbers. The trained policy acts deterministically. An episode ends with a lap, off road (10 s off the road or a barrier hit), stuck (10 s without progress) or a 120 s timeout. We report lap success rate, off-track rate, stuck rate, lap time over successful laps, mean speed and mean progress. PPO is trained with 3 training seeds and reported per training seed and pooled. Every rate has a 95% interval and every comparison a paired test, McNemar for laps and Wilcoxon for progress and lap time, with Holm correction and a Friedman test across all policies. Section by section justification in docs/EVALUATION_STATISTICS.md.
 
 ### Baselines
 
 - **Random** draws a uniform action every step. It is the floor.
 - **Pure pursuit** is a hand-written controller that reads the track centerline, which PPO never sees. It steers toward a point 10 m ahead and picks the speed the tires can hold in the coming corner. It is the reference for a competent driver and shows the tracks are solvable (Gate 1).
 
-### MVP results, validation 1000 to 1049
+### Final results, test 10000 to 10199
 
-| Policy | Difficulty | Laps | Off track | Stuck | Lap time |
-|---|---|---|---|---|---|
-| pure pursuit | 0 | 100% | 0% | 0% | 29.5 s |
-| random | 0 | 0% | 0% | 100% | - |
-| PPO mvp, 3 seeds | 0 | 61% ± 44 | 5% ± 8 | 33% ± 47 | 24.1 s |
-| pure pursuit | 1 | 100% | 0% | 0% | 31.3 s |
-| random | 1 | 0% | 0% | 100% | - |
-| PPO mvp, 3 seeds | 1 | 49% ± 35 | 17% ± 12 | 34% ± 47 | 26.1 s |
+The T11 config `final` adds the adaptive curriculum, the overspeed penalty and mixed difficulties to the MVP, 4M steps per training seed. Each policy drove the same 200 test tracks once, at difficulty 0 and 1.
 
-Per seed at difficulty 0 the lap rate is 100%, 0% and 84%. At difficulty 1 it is 78%, 0% and 70%.
+| Policy | Difficulty | Laps | 95% CI | Off track | Stuck | Lap time |
+|---|---|---|---|---|---|---|
+| PPO `final`, 3 training seeds | 0 | 100% | [1.00, 1.00] | 0% | 0% | 24.2 s |
+| pure pursuit | 0 | 100% | [0.98, 1.00] | 0% | 0% | 29.5 s |
+| random | 0 | 0% | [0.00, 0.02] | 0% | 100% | - |
+| PPO `final`, 3 training seeds | 1 | 95.7% | [0.94, 0.97] | 3.2% | 1.2% | 36.3 s |
+| pure pursuit | 1 | 100% | [0.98, 1.00] | 0% | 0% | 40.7 s |
+| random | 1 | 0% | [0.00, 0.02] | 0% | 100% | - |
 
-Reading
-- PPO beats random clearly, so the agent learns to drive from lidar alone (Gate 1).
-- When PPO laps, it is about 5 s faster than pure pursuit, because pure pursuit uses a conservative speed limit.
-- The mean hides a split. Two seeds drive well, one never learns to move (seed 1). The large std is that seed, not noise around the mean. This is why we train 3 seeds.
-- The MVP trains only on gentle tracks (difficulty 0). On harder tracks it loses about 10 points of lap rate and the failures move from stuck to off road.
-- Difficulty 0.5 and 1 give almost the same numbers (49% both). The difficulty knob may change the tracks less than expected. To be checked with S1.
-- `best_model` is selected on validation 1000 to 1019. On 1020 to 1049 alone the lap rates are 100%, 0% and 87%, so selection bias is small.
+Friedman rejects equal performance at both difficulties (p < 0.0001). Pairwise, Holm corrected
+- **PPO against random.** Every training seed laps more tracks (McNemar, 187 to 194 discordant tracks at difficulty 1, p < 0.0001).
+- **PPO against pure pursuit.** At difficulty 0 there is no discordant track. At difficulty 1 pure pursuit laps 6, 7 and 13 tracks that training seeds 1, 0 and 2 miss and never the reverse (p 0.03, 0.03 and 0.0007). On tracks both finish PPO is 5.4 s faster at difficulty 0 and 4.4 s at difficulty 1 (Wilcoxon p < 0.0001).
+- **Training seeds.** Per training seed the lap rate at difficulty 1 is 96.5%, 97% and 93.5%, and the t interval over training seeds is [0.91, 1.00]. The method now works for every training seed, not only for a lucky one.
 
-### Intervals and tests on validation
+Full output in `results/stats_test_d0.md` and `results/stats_test_d1.md`, bar charts `results/results_test_d0.png` and `results/results_test_d1.png`.
 
-| Difficulty | Policy | Lap rate | 95% CI over tracks |
+### How we got there, validation at difficulty 1
+
+| Config | Training seed 0 | Training seed 1 | Training seed 2 |
 |---|---|---|---|
-| 0 | PPO mvp pooled | 0.61 | [0.58, 0.65] |
-| 0 | pure pursuit | 1.00 | [0.93, 1.00] |
-| 0 | random | 0.00 | [0.00, 0.07] |
-| 1 | PPO mvp pooled | 0.49 | [0.43, 0.56] |
-| 1 | pure pursuit | 1.00 | [0.93, 1.00] |
+| `mvp`, difficulty 0 only | 0% | 0% | 0% |
+| `mvp_curriculum_4m`, curriculum | 100% | 100% | 0% |
+| `exp_overspeed_4m`, + overspeed | 100% | 100% | 12% |
+| `final`, + mixed difficulties | 100% | 98% | 88% |
 
-Friedman rejects equal performance at both difficulties (p < 0.0001). With Holm correction, PPO seeds 0 and 2 lap more tracks than random (McNemar p < 0.0001) and seed 1 does not differ from random. At difficulty 1 every PPO seed laps fewer tracks than pure pursuit (p ≤ 0.002), while on tracks both finish PPO is about 5 s faster (Wilcoxon p < 0.0001). The t interval over the 3 seeds covers the whole range [0, 1], so the training method itself is not yet reliable.
-
-### Final results
-
-TODO after T11 and T12. Test split, 200 tracks for all, `evaluation.stats` output with intervals and Holm corrected tests, PPO target config 3 seeds, ablations 3 seeds each, both baselines. Bar chart `results/results_test.png` and the Markdown table.
+- Training seed 2 of `mvp_curriculum_4m` never braked hard. It reached corners above their grip limit although the lidar showed them early enough to brake. Chained corners were not the cause.
+- The overspeed term taught it to brake, but it braked so much that it rolled backwards into walls, since brake and reverse are the same pedal.
+- Mixed difficulties removed the reversing and all 3 training seeds reached difficulty 1. On validation tracks 1050 to 1099, never used for model selection, they lap 98%, 96% and 92%.
 
 ### Learning curve
 
-`runs/figures/curve_mvp.png`. Validation lap rate rises from about 30% to about 58% by 0.8M steps and then flattens. The wide band is seed 1 staying at 0. TODO replace with the T11 curve.
+`results/curve_final.png`. Validation lap rate over the 3 training seeds. The dips follow each curriculum step, when validation moves to harder tracks, and the rate ends near 95% at difficulty 1.
 
 ## 5. Failure analysis
 
-Plots show the track, the barriers, the path colored by speed and a cross where the episode ended.
+Test tracks at difficulty 1 with the T11 models, figures in `results/failures/`. Plots show the track, the barriers, the path colored by speed and a cross where the episode ended.
 
-1. **Never starts (seed 1, track 1000, any track).** The car creeps a few meters at under 5 m/s and stops with 0% progress until the stuck timeout. The policy found a local optimum where it avoids the off-road penalty by not driving. The idle and stuck penalties from T08 were not enough for this seed. Seed 0 shows the same freeze on one hard track (1010 at difficulty 1, speed 0 the whole episode), so the behavior is not unique to seed 1.
-2. **Corner taken too fast (seed 0, track 1005, difficulty 1).** The car runs a long straight at the 20 m/s top speed and reaches a sharp left kink without braking. It goes straight across onto the inside and off the road at 42% of the lap. The lidar sees the corner only at short range, so it brakes too late.
-3. **Drift off at the end of the lap (seed 2, track 1005, difficulty 0).** After a fast lap the car exits the last corner wide, slows to about 8 m/s and stays on the grass beside the road until the off-road timeout at 98% progress. It does not steer back once it is off, which suggests it rarely saw recovery situations in training.
-
-TODO redo these three on test tracks with the T11 model, as T13 asks.
+1. **Corner taken too fast (training seed 2, track 10065).** The car enters a 20 m corner 4.6 m/s above the allowed speed with 64% throttle and leaves the road on the outside at 58% of the lap. The overspeed term makes this rarer but does not remove it.
+2. **Stops on the grass (training seed 2, track 10026).** The car brakes in a corner, slides onto the grass at 61% of the lap and stays there almost stopped, without throttle and without steering back, until the 10 s grass limit. It rarely saw recovery situations in training. Track 10057 fails the same way.
+3. **Does not start on one track (training seed 0, track 10090).** The start line sits just before a tight 13 m corner. The car rolls two meters, stops with zero throttle and ends stuck at 1% of the lap. With the barrier close ahead the policy chooses to stand still. Track 10003 shows the same stop at 82% of the lap.
 
 ## Media
 
-- `videos/ppo_vs_pure_pursuit_1020.mp4` PPO (25.1 s) next to pure pursuit (30.2 s), difficulty 0
-- `videos/ppo_vs_pure_pursuit_1020_d1.mp4` same at difficulty 1, 26.1 s vs 30.5 s
+- Videos recorded with the MVP models, rerecord with `final` for the demo
+- `videos/ppo_vs_pure_pursuit_1020.mp4` PPO next to pure pursuit, difficulty 0
+- `videos/ppo_vs_pure_pursuit_1020_d1.mp4` same at difficulty 1
 - `videos/lidar_s0_1021.mp4` single PPO view with lidar rays
 - `videos/failure_s1_stuck_1000.mp4` and `videos/failure_s2_1008.mp4` failure cases
-- Figures in `runs/figures/`, curve, bars at difficulty 0 and 1, failures
+- Figures in `results/`, curve, bars at difficulty 0 and 1, failures

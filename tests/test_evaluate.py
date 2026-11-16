@@ -2,7 +2,15 @@ import numpy as np
 import pytest
 
 from evaluation.baselines import RandomPolicy
-from evaluation.evaluate import METRICS, aggregate, evaluate, split_seeds, to_markdown
+from evaluation.evaluate import (
+    METRICS,
+    aggregate,
+    check_seeds,
+    evaluate,
+    make_policy,
+    split_seeds,
+    to_markdown,
+)
 
 # track seed to scripted outcome and episode length in steps
 OUTCOMES = {1000: ("lap", 4), 1001: ("off_road", 2), 1002: ("stuck", 3), 1003: ("timeout", 5)}
@@ -58,10 +66,19 @@ def test_no_lap_gives_no_lap_time():
     assert evaluate(zero_policy, [1001, 1002], 0.0, env=MockEnv())["mean_lap_time"] is None
 
 
-@pytest.mark.parametrize("seed", [0, 999, 2000, 9999, 100_000])
-def test_rejects_training_and_unknown_seeds(seed):
+@pytest.mark.parametrize("seeds", [[0], [999], [2000], [9999], [100_000], [1000, 5]])
+def test_rejects_training_and_unknown_seeds(seeds):
     with pytest.raises(ValueError):
-        evaluate(zero_policy, [seed], 0.0, env=MockEnv())
+        evaluate(zero_policy, seeds, 0.0, env=MockEnv())
+
+
+def test_accepts_the_edges_of_both_splits():
+    check_seeds([1000, 1999, 10_000, 99_999])
+
+
+def test_unknown_policy_name_is_an_error():
+    with pytest.raises(ValueError):
+        make_policy("pure_persuit", env=None)
 
 
 def test_split_seeds():
@@ -89,4 +106,4 @@ def test_to_markdown():
 
 def test_real_env_smoke():
     r = evaluate(RandomPolicy(seed=0), [1000], 0.0)
-    assert set(METRICS) <= r.keys() and r["n_episodes"] == 1
+    assert r["lap_success_rate"] == 0.0 and r["episodes"][0]["outcome"] in ("stuck", "off_road")

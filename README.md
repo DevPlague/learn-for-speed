@@ -30,15 +30,11 @@ The GIF above is the pure pursuit baseline on validation track 1000. The yellow 
 
 - [Features](#-features)
 - [Install](#-install)
-- [Usage](#-usage)
-- [Make commands](#-make-commands)
+- [Commands](#-commands)
+- [Tracks and difficulty](#-tracks-and-difficulty)
+- [Configs](#%EF%B8%8F-configs)
 - [Driving keys](#driving-keys)
-- [Seeds and splits](#seeds-and-splits)
-- [Project layout](#project-layout)
-- [Troubleshooting](#troubleshooting)
-- [FAQ](#faq)
-- [Contributing](#-contributing)
-- [To Do](#to-do)
+- [Track seeds, training seeds and splits](#track-seeds-training-seeds-and-splits)
 
 ## ✨ Features
 
@@ -62,7 +58,7 @@ The GIF above is the pure pursuit baseline on validation track 1000. The yellow 
 
 **Dashboard**
 
-- One static page built from `runs/`. Learning curves, validation tables, synced replays of every policy with lidar and follow camera, and physics plots. No server needed.
+- `make dashboard` builds the dashboard from the final runs `final_s0` to `final_s2`, serves it on this computer and prints the local link (`http://localhost:8000/`), Ctrl+C stops it. It refuses to build when a final run is missing and prints the training command instead. `make dashboard SERVE=0` only builds into `runs/dashboard/`.
 
 ## 📦 Install
 
@@ -92,84 +88,76 @@ make docker-test
 
 Your folder is mounted into the container, so Python changes apply at once and everything written to `runs/` lands on your disk.
 
-## 🚦 Usage
+## 🚦 Commands
 
-The whole project in six steps. Each one is a single command, run from the repo folder.
+Every command runs from the repo folder. `make help` lists them all, and variables go after the command, like `make play SEED=1002`.
 
-| Step | Local | Docker |
-|---|---|---|
-| 1. Drive a track yourself | `make play` | `make docker-play` |
-| 2. Train an agent | `make train CONFIG=tiny` | `make docker-run CMD="python -m learning.train --config configs/tiny.yaml"` |
-| 3. Watch it learn | `make tb` | `make docker-tb` |
-| 4. Evaluate it | `make eval POLICY=ppo MODEL=runs/tiny_s0/best_model.zip` | `make docker-run CMD="python -m evaluation.evaluate --policy ppo --model runs/tiny_s0/best_model.zip --split val --n 20"` |
-| 5. Compare with the baselines | `make eval POLICY=pure_pursuit` and `make eval POLICY=random` | same with `--policy pure_pursuit` or `random` |
-| 6. See it all in the dashboard | `make dashboard RUNS="tiny_s0"` | `make docker-run CMD="python -m dashboard.build --runs tiny_s0"` |
-
-**1. Drive.** A window opens on the start line. Pick any track and difficulty with `make play SEED=1002 DIFFICULTY=1`.
-
-**2. Train.** `CONFIG` is a file name in `configs/` and `SEED` the training seed, default 0. Outputs go to `runs/<config>_s<seed>/`, with the config, `model.zip`, `best_model.zip`, checkpoints, `progress.csv` and TensorBoard logs.
-
-| Config | What it is | Time on a laptop |
-|---|---|---|
-| `tiny` | 20k steps, checks that everything runs | about 1 minute |
-| `probe`, `probe_nojitter` | 200k steps, quick reward experiments | a few minutes |
-| `mvp` | the main run | long, ask the team first |
-
-For mean ± std, train the same config with several seeds, for example `make train CONFIG=mvp SEED=1`.
-
-**3. Watch.** TensorBoard opens on http://localhost:6006 and reads every run in `runs/`. Refresh it while training runs.
-
-**4 and 5. Evaluate.** One episode per validation track, default the first 20 (`N=20`) at difficulty 0.5. Pass several models at once to average over seeds, `MODEL="runs/mvp_s0/best_model.zip runs/mvp_s1/best_model.zip"`. Results print as a table and save to `runs/eval_<policy>_val/eval.json`. The full process is in [docs/EVALUATION.md](docs/EVALUATION.md).
-
-**6. Dashboard.** `RUNS` lists the run folders to evaluate and replay next to the baselines. Then open `runs/dashboard/index.html` in your browser.
-
-## 🛠 Make commands
-
-`make help` prints them all. Variables go after the command, like `make play SEED=1002`.
-
-**Set up**
-
-| Command | What it does |
+| Task | Command |
 |---|---|
-| `make setup` | Creates the Python env and builds the Rust core. First time and after pulling new dependencies |
-| `make rust` | Forces a Rust rebuild, only if a Rust change does not seem to apply |
-| `make clean` | Removes Python caches, keeps `runs/`, `videos/` and `models/` |
+| Create the env and build the Rust core | `make setup` |
+| Force a Rust rebuild, normally automatic | `make rust` |
+| Run all tests, lint, auto-format | `make test`, `make lint`, `make format` |
+| Env speed and track generation time | `make bench` |
+| Drive a track by keyboard | `make play SEED=1002 DIFFICULTY=1` |
+| Train one training seed of a config into `runs/<config>_s<seed>/` | `make train CONFIG=mvp SEED=0` |
+| Train 3 training seeds at once on Windows or Linux, each run uses about one core | `make train-seeds CONFIG=final SEEDS="0 1 2"` |
+| Watch training curves on http://localhost:6006 | `make tb` |
+| Evaluate a baseline on validation tracks | `make eval POLICY=pure_pursuit N=50 DIFFICULTY=1` |
+| Evaluate PPO, one zip per training seed | `make eval POLICY=ppo MODEL="runs/mvp_s0/best_model.zip runs/mvp_s1/best_model.zip"` |
+| Final test table, once, never to tune | `make eval POLICY=ppo MODEL="..." SPLIT=test N=200` |
+| Intervals and paired tests between evals | `make run CMD="python -m evaluation.stats ppo=runs/eval_ppo_val/eval.json pp=runs/eval_pure_pursuit_val/eval.json"` |
+| Learning curve over training seeds | `make run CMD="python -m evaluation.plots curve --runs runs/mvp_s0 runs/mvp_s1 runs/mvp_s2 --label mvp"` |
+| Bar chart and failure plots | `evaluation.plots bars --evals name=eval.json ...` and `evaluation.plots failures --policy ppo --model runs/mvp_s1/model.zip` |
+| Watch a run drive 6 tracks, checkpoint after checkpoint | `make run CMD="python -m learning.watch --run runs/final_s2 --tracks 6"` |
+| Side by side video into `videos/` | `make run CMD="python -m evaluation.demo --policies ppo pure_pursuit --model runs/mvp_s0/best_model.zip --seed 1000"` |
+| Build the dashboard and serve it at a local link | `make dashboard`, or `make dashboard SERVE=0` to build only |
+| Any command inside the env | `make run CMD="python x.py"` |
 
-**Drive, train and evaluate**
+`make eval` defaults to the first 20 validation tracks at difficulty 0.5 and writes `runs/eval_<policy>_<split>/eval.json`. Pass `--out` through `make run CMD="python -m evaluation.evaluate ..."` to keep several difficulties apart.
 
-| Command | Variables | What it does |
-|---|---|---|
-| `make play` | `SEED` `DIFFICULTY` | Drive by keyboard |
-| `make train` | `CONFIG` `SEED` | Train PPO from `configs/CONFIG.yaml` |
-| `make eval` | `POLICY` `MODEL` `N` `DIFFICULTY` `SPLIT` | Evaluate `random`, `pure_pursuit` or `ppo` |
-| `make run CMD="..."` | `CMD` | Run any command inside the env |
+Docker runs the same steps without installing anything. `make docker-build` once and after any change in `rust/` or the dependencies, `make docker-test`, `make docker-play`, `make docker-tb`, `make docker-shell` and `make docker-run CMD="python -m learning.train --config configs/mvp.yaml --seed 0"` for any other command.
 
-**Look at results**
+## 🛣 Tracks and difficulty
 
-| Command | Variables | What it does |
-|---|---|---|
-| `make tb` | | TensorBoard on http://localhost:6006 |
-| `make dashboard` | `RUNS` | Build the dashboard into `runs/dashboard/` |
+`generate_track(seed, difficulty)` in `sim/track.py` builds every track, and the same track seed and difficulty always give the same one. It puts control points around a 70 m circle with some noise in angle and radius, draws a closed cubic spline through them and resamples it at one point per meter. Corners tighter than 12 m are widened in place so the inner barrier never folds, and loops whose far parts come too close are redrawn. The road is 8 m wide with 8 m of grass to the barrier on each side.
 
-**Check code**
+Difficulty is any number from 0 to 1. It sets the control points (6 to 12) and the noise (0.1 to 0.5), so higher means more and tighter corners.
 
-| Command | What it does |
+| Difficulty | Control points | Points tighter than 25 m | Pure pursuit lap |
+|---|---|---|---|
+| 0 | 6 | 2% | 29.5 s |
+| 0.5 | 9 | 10% | 32.3 s |
+| 1 | 12 | 26% | 41.5 s |
+
+Pick it with `DIFFICULTY=` in `make play` and `make eval`, or with `difficulty` in a config. Formulas are in [docs/PHYSICS.md](docs/PHYSICS.md).
+
+## ⚙️ Configs
+
+One YAML in `configs/` per experiment, and its file name is the run name. To try something, copy a config, change one thing and train it with 3 training seeds.
+
+| Key | Meaning |
 |---|---|
-| `make test` | Runs all tests |
-| `make lint` | Checks Python with ruff and Rust with rustfmt and clippy |
-| `make format` | Auto-formats Python and Rust |
-| `make bench` | Prints env steps per second and track generation time |
+| `total_timesteps`, `n_envs` | Training length and parallel envs |
+| `difficulty` | Track difficulty the agent trains on, the starting one with a curriculum |
+| `curriculum.step`, `curriculum.threshold` | Optional. Raise the difficulty by `step` each time the validation lap rate reaches `threshold` |
+| `curriculum.mix` | Optional. Share of training episodes whose difficulty is drawn uniformly below the current one |
+| `reward.overspeed` | Optional. Penalty per step for driving faster than the car could still brake from for the corners within lidar range |
+| `checkpoint_freq` | Steps between `checkpoints/*.zip` |
+| `eval.freq`, `eval.tracks` | Validation every so many steps, on the first tracks from track seed 1000. Fills `val_curve.csv` and picks `best_model.zip` |
+| `reward.*` | Weights of `RaceReward` in `learning/reward.py`, progress, time, jitter, grass, idle, crawl, off_road, stuck and lap |
+| `ppo.*` | Passed straight to Stable-Baselines3 PPO |
 
-**Docker**
-
-| Command | What it does |
-|---|---|
-| `make docker-build` | Builds the image |
-| `make docker-test` | Runs all tests in the container |
-| `make docker-play` | Drives by keyboard with the window on your screen, takes `SEED` and `DIFFICULTY` |
-| `make docker-run CMD="..."` | Runs any command in the container, for headless training or evaluation |
-| `make docker-shell` | Opens a shell in the container |
-| `make docker-tb` | TensorBoard from the container on http://localhost:6006 |
+| Config | What it is | Time on 8 cores |
+|---|---|---|
+| `tiny` | 20k steps, checks that everything runs | under a minute |
+| `probe`, `probe_nojitter` | 200k step reward checks from week 2 | a few minutes |
+| `probe_mvp`, `probe_ent`, `probe_crawl` | 300k step checks of `mvp`, with an entropy bonus and with crawl instead of idle | under 2 minutes |
+| `mvp` | the first main run, 2M steps, one training seed of 3 never starts | about 5 minutes alone, 9 for 3 training seeds at once, ask the team first |
+| `mvp_crawl` | `mvp` with crawl instead of idle | about 5 minutes |
+| `mvp_curriculum` | `mvp_crawl` with the adaptive curriculum from difficulty 0 to 1 | about 5 minutes |
+| `mvp_curriculum_4m` | `mvp_curriculum` with 4M steps | about 15 minutes for 3 training seeds at once |
+| `exp_overspeed_4m` | `mvp_curriculum_4m` with the overspeed penalty | about 15 minutes for 3 training seeds at once |
+| `final` | the frozen T11 config, `exp_overspeed_4m` with mixed difficulties, all 3 training seeds lap 92% or more at difficulty 1 | about 17 minutes for 3 training seeds at once |
 
 ## Driving keys
 
@@ -182,7 +170,7 @@ For mean ± std, train the same config with several seeds, for example `make tra
 
 An attempt fails after 10 s in a row on grass, on reaching the barrier, after 10 s without progress, or after 120 s. A failed attempt or a finished lap puts you back on the start line. Corners taken too fast make the car drift, as [the physics guide](docs/PHYSICS.md) explains.
 
-## Seeds and splits
+## Track seeds, training seeds and splits
 
 | Split | Track seeds | Used for |
 |---|---|---|
@@ -190,4 +178,6 @@ An attempt fails after 10 s in a row on grass, on reaching the barrier, after 10
 | Validation | 1000 to 1999 | Everything while developing, `make eval` default |
 | Test | 10000 and up | Final results only, with `SPLIT=test`. Never tune on it |
 
-The evaluation script rejects training seeds, so no training track reaches the results.
+The evaluation script rejects training track seeds, so no training track reaches the results.
+
+A **training seed** (0, 1 or 2, the `_s0` in run names) is a different thing. It fixes the starting weights of the network and the randomness of PPO, not a track. One run uses one training seed and thousands of track seeds, and the 3 runs of a config are 3 independent trainings of the same method.

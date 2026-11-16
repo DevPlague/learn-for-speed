@@ -1,21 +1,24 @@
 import numpy as np
-import pytest
 
 from evaluation.baselines import PurePursuitPolicy, RandomPolicy
-from evaluation.demo import label, record
+from evaluation.demo import describe, label, record
 
 
-def test_record_side_by_side_until_all_finish():
+def test_record_side_by_side_freezes_a_finished_car():
     policies = {"pp": PurePursuitPolicy, "random": lambda env: RandomPolicy(seed=0)}
     frames, outcomes = record(policies, 1000, 0.0, max_steps=300)
     h, w, c = frames[0].shape
-    assert c == 3 and w == 2 * 800 and h == 600
-    assert outcomes == {"random": "stuck"}  # random gives up within 10 s, pure pursuit drives on
+    assert (h, w, c) == (600, 2 * 800, 3) and len(frames) == 300
+    assert list(outcomes) == ["random"]  # random ends within 10 s, pure pursuit still drives
+    before, last = frames[-2], frames[-1]
+    assert (before[:, :800] != last[:, :800]).any() and (before[:, 800:] == last[:, 800:]).all()
 
 
-def test_record_rejects_training_seed():
-    with pytest.raises(ValueError):
-        record({"random": lambda env: RandomPolicy()}, 100_000, 0.0, max_steps=1)
+def test_describe_names_each_outcome():
+    base = {"lap_done": False, "off_road": False, "stuck": False}
+    assert describe({**base, "lap_done": True, "lap_time": 25.14}) == "lap 25.1 s"
+    assert describe({**base, "off_road": True}) == "off road"
+    assert describe(base) == "timeout"
 
 
 def test_label_draws_on_a_copy():

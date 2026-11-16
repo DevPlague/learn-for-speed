@@ -1,6 +1,6 @@
 # learn-for-speed
 
-2D top-down racing car. PPO (stable-baselines3) learns to drive procedurally generated tracks; judged on held-out tracks vs baselines (random, pure pursuit) and ablations. School project, 3 students, ~6 weeks. Python 3.12 only, uv, Linux. Deadline/format unknown: keep a demo-ready state.
+2D top-down racing car. PPO (stable-baselines3) learns to drive procedurally generated tracks; judged on held-out tracks vs baselines (random, pure pursuit). School project, 3 students, ~6 weeks. Python 3.12 only, uv, Linux. Deadline/format unknown: keep a demo-ready state.
 
 ## Commands (use make, never raw pip/python)
 - `make setup` env; `make play` drive by keyboard; `make run CMD="python x.py"`; `make train CONFIG=tiny SEED=0`; `make eval POLICY=pure_pursuit` (val split); `make test | lint | format | rust | bench | tb | dashboard | clean`
@@ -12,7 +12,7 @@
 - `evaluation/` S3 (Evaluation): baselines, evaluate, plots, videos. `tests/` each owner tests their folder.
 - `dashboard/` S2, local web dashboard built from runs/ into runs/dashboard/ (`make dashboard RUNS="mvp_s0"`).
 - Only the owner edits a folder. Contracts between modules: docs/SPEC.md.
-- Plan, tasks, risks, experiment and decision logs: docs/PLAN.md.
+- Plan, tasks and risks: docs/PLAN.md.
 
 ## Design (intended)
 - Custom gymnasium env; physics core in Rust (one call per step, NumPy arrays), pygame only for rendering (lazy import) so training is headless.
@@ -23,11 +23,12 @@
 ## Rules
 - Seed everything. One config file per experiment; save it next to the run outputs (runs/<name>/).
 - Track seeds: random training >= 100000, validation 1000-1999, test 10000+. Never tune on test; report test only.
+- Always write track seed (which track) or training seed (PPO run seed 0, 1, 2, the `_s0` in run names), never a bare seed.
 - Never commit runs/, videos/, *.pkl or large files. Commit only deliberate final models and small result tables/figures.
 - Ask before launching any training > 10 min. Check changes with a tiny run first.
 - Do not read raw logs, tensorboard files or uv.lock. Read short printed summaries only.
-- Changing obs/action/reward: log it in docs/PLAN.md (Decisions) and keep tests passing.
-- Read docs/SPEC.md before touching a module interface. Interface changes update SPEC.md and PLAN.md Decisions in the same PR.
+- Changing obs/action/reward: update docs/SPEC.md and keep tests passing.
+- Read docs/SPEC.md before touching a module interface. Interface changes update SPEC.md in the same PR.
 - Never decide architecture, libraries or interfaces alone. Ask the student first, keep code simple, no over-engineering.
 - Work on a branch, never on main. Never run git commit or push and never add yourself to commits. Give the student a code block with the git add and git commit commands.
 - No semicolons or colons in comments and docs prose. Commit messages never contain semicolons.
