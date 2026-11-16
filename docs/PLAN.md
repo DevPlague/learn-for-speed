@@ -64,6 +64,7 @@ If the deadline is earlier, cut from the bottom: Stretch, then training seeds (k
 - [x] T09 (S2) Adaptive curriculum with the overspeed penalty and mixed difficulties, all 3 training seeds reach difficulty 1 (2026-11-15)
 - [x] T11 (S2) Final runs, 3 training seeds of `configs/final.yaml`, 95.7% laps on test at difficulty 1 (2026-11-15)
 - [x] T13 (S3) Failure analysis on 3 test tracks with the T11 model, in docs/REPORT_EVALUATION.md (2026-11-15)
+- [x] T18 (S2) Dashboard tester feedback: blue accent, checkered side stripes, pixel arrows instead of the menu, digital counters per level on the home page, no channel roll, charts destroyed before a view redraws and physics traces without per point animation (2026-11-16)
 
 ## Risks
 | Risk | Likelihood | Mitigation |

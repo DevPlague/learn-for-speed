@@ -81,6 +81,11 @@ const mod1 = (a) => ((a % 1) + 1) % 1;
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 const isPpo = (key) => key.startsWith("ppo:") || key.startsWith("pooled:");
 const timeoutRate = (m) => Math.max(0, 1 - m.lap_success_rate - m.off_track_rate - m.stuck_rate);
+const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+// seven segment readouts keep the dot, the DSEG face has no comma
+const digit = (x, d = 1) => (x == null ? "--" : Number(x).toFixed(d));
+const LEVEL_NAMES = { 0: "Fácil", 0.5: "Media", 1: "Difícil" };
+const levelName = (d) => LEVEL_NAMES[Number(d)] || `dificultad ${num(d)}`;
 
 function runLabel(name) {
   const run = D.runs.find((r) => r.name === name);
@@ -99,7 +104,7 @@ function policyName(key) {
   const test = key.match(/^eval_(.+)_test(?:_d(\d+))?$/);
   if (test) {
     const who = test[1] === "pure_pursuit" ? "Pure pursuit" : test[1] === "random" ? "Random" : `PPO ${configLabel(test[1])}`;
-    return test[2] != null ? `${who} · dificultad ${test[2]}` : who;
+    return test[2] != null ? `${who} · ${levelName(test[2]).toLowerCase()}` : who;
   }
   return `PPO ${runLabel(key.replace(/^ppo:/, ""))}`;
 }
@@ -151,7 +156,7 @@ function level() {
 function levelTabs(el) {
   const levels = D.levels || [];
   el.innerHTML = levels.length < 2 ? "" : levels
-    .map((l, i) => `<button data-level="${i}" class="${i === state.level ? "active" : ""}">dificultad ${num(l.difficulty)}</button>`)
+    .map((l, i) => `<button data-level="${i}" class="${i === state.level ? "active" : ""}">${levelName(l.difficulty)}</button>`)
     .join("");
   $$("button", el).forEach((b) =>
     b.addEventListener("click", () => {
@@ -201,8 +206,8 @@ function chartDefaults() {
     const n = c.chart.data.datasets[c.datasetIndex].data.length || 1;
     return (c.dataIndex / n) * 520 + c.datasetIndex * 80;
   };
-  Chart.defaults.animation = REDUCED ? false : { duration: 1000, easing: "easeOutQuart", delay: wave };
-  if (!REDUCED) Chart.defaults.animations.y = { duration: 1100, easing: "easeOutBack" };
+  // no overshoot, a bar that passes the top of the axis gets clipped and looks cut
+  Chart.defaults.animation = REDUCED ? false : { duration: 700, easing: "easeOutQuart", delay: wave };
   // hovering only highlights, quickly and without overshoot
   Chart.defaults.transitions.active.animation.duration = REDUCED ? 0 : 120;
   Chart.defaults.interaction = { mode: "nearest", intersect: false, axis: "x" };
@@ -246,6 +251,17 @@ function pruneCharts() {
       delete state.charts[id];
     }
   });
+}
+
+// charts inside a container must die before its HTML is wiped, or they keep animating on dead canvases
+function destroyChartsIn(el) {
+  Object.entries(state.charts).forEach(([id, chart]) => {
+    if (!chart.canvas || !chart.canvas.isConnected || el.contains(chart.canvas)) {
+      chart.destroy();
+      delete state.charts[id];
+    }
+  });
+  el.innerHTML = "";
 }
 
 function chartError(canvas, err) {
@@ -294,15 +310,20 @@ function chartCard(parent, id, title, info) {
   return $(`#${id}`);
 }
 
+// extra.fast draws without animation and decimates long series, for the per step physics traces
 function lineOptions(xTitle, extra = {}) {
   return {
     parsing: false,
     normalized: true,
+    ...(extra.fast ? { animation: false } : {}),
     scales: {
       x: { type: "linear", title: { display: !!xTitle, text: xTitle }, grid: { display: false } },
       y: { beginAtZero: false, ...extra.y },
     },
-    plugins: { legend: { display: extra.legend !== false, position: "bottom" } },
+    plugins: {
+      legend: { display: extra.legend !== false, position: "bottom" },
+      ...(extra.fast ? { decimation: { enabled: true, algorithm: "min-max", samples: 400 } } : {}),
+    },
   };
 }
 
@@ -911,72 +932,34 @@ function renderCluster() {
   const v = D.validation[key] || {};
   const pp = D.validation.pure_pursuit || {};
   const maxKmh = Math.ceil((D.meta.max_speed * 3.6) / 10) * 10;
-  const lamps = [
-    ["salida de pista", v.off_track_rate, "red"],
-    ["atasco", v.stuck_rate, ""],
-    ["tiempo agotado", v.lap_success_rate == null ? 0 : timeoutRate(v), ""],
-  ];
-  const clean = lamps.every(([, rate]) => !rate);
   $("#cluster").innerHTML = `
     <div class="gauge"><canvas id="g-speed"></canvas><span>velocidad media</span></div>
     <div class="lcd">
-      <div><small>tiempo de vuelta</small><b>${num(v.mean_lap_time)} s</b><small>pure pursuit ${num(pp.mean_lap_time)} s</small></div>
-      <div><small>vuelta recorrida de media</small><b>${pct(v.mean_progress)}</b></div>
-      <small>${esc(policyName(key))}, ${D.meta.eval_tracks} pistas de validación en dificultad ${num(D.meta.difficulty)}</small>
+      <div class="cells">
+        <div class="cell"><small>Tiempo de vuelta</small><b>${digit(v.mean_lap_time)}<span class="unit">s</span></b></div>
+        <div class="cell"><small>Pure pursuit</small><b>${digit(pp.mean_lap_time)}<span class="unit">s</span></b></div>
+        <div class="cell wide"><small>Progreso conseguido de media por pista</small><b>${digit(100 * (v.mean_progress || 0), 0)}<span class="unit">%</span></b></div>
+      </div>
+      <div class="foot">${esc(policyName(key))}, ${D.meta.eval_tracks} pistas de validación, nivel ${levelName(D.meta.difficulty).toLowerCase()}</div>
     </div>
-    <div class="gauge"><canvas id="g-laps"></canvas><span>vueltas completadas</span></div>
-    <div class="lights">${lamps
-      .map(([label, rate, kind]) => `<span class="lamp ${rate ? `on ${kind}` : ""}" title="${pct(rate)}"><i></i>${label}</span>`)
-      .join("")}<span class="lamp ${clean ? "ok" : ""}"><i></i>todo en orden</span></div>`;
+    <div class="gauge"><canvas id="g-laps"></canvas><span>vueltas completadas</span></div>`;
   animateGauge($("#g-speed"), (v.mean_speed || 0) * 3.6, maxKmh, "km/h", 0, maxKmh / 10);
   animateGauge($("#g-laps"), 100 * (v.lap_success_rate || 0), 100, "%", 0, 5);
 }
 
-function renderBoard() {
-  const el = $("#board");
-  el.innerHTML = "";
+// one digital counter per difficulty with the share of validation tracks the model laps
+function renderCounters() {
   const key = mainPolicy();
-  const eps = (D.replays[key] || []).slice(0, 3);
-  eps.forEach((ep, i) => {
-    el.insertAdjacentHTML(
-      "beforeend",
-      `<div class="card tile" data-seed="${ep.seed}"><canvas id="board-${i}"></canvas><div class="tile-body">
-        <div class="tile-title">pista ${ep.seed}</div>
-        <div class="tile-foot"><span>${episodeNote(ep)}</span><span>${num(ep.frames.x.length * ep.dt)} s</span></div>
-      </div></div>`
-    );
-    drawStatic($(`#board-${i}`), D.tracks[ep.seed], ep);
-  });
-  $$("#board .tile").forEach((tile) =>
-    tile.addEventListener("click", () => {
-      simState.mode = "track";
-      simState.seed = tile.dataset.seed;
-      go("simulation");
-    })
-  );
-}
-
-function grade(rate) {
-  return rate >= 0.9 ? "A+" : rate >= 0.75 ? "A" : rate >= 0.5 ? "B" : rate >= 0.25 ? "C" : "D";
-}
-
-function renderPolicies() {
-  $("#policies").innerHTML = Object.entries(D.validation)
-    .map(([key, m]) => {
-      const iconName = key.startsWith("ppo:") ? "bot" : key === "random" ? "shuffle" : "car";
-      return `<div class="list-item" data-policy="${key}">
-        <div class="icon-box" style="color:${policyColor(key)}">${icon(iconName)}</div>
-        <div class="grow"><div>${esc(policyName(key))}</div><div class="sub">vueltas ${pct(m.lap_success_rate)}, ${num(m.mean_speed * 3.6, 0)} km/h</div></div>
-        <span class="grade">${grade(m.lap_success_rate)}</span></div>`;
+  const levels = D.levels || [{ difficulty: D.meta.difficulty, validation: D.validation }];
+  $("#counters").innerHTML = levels
+    .map((l) => {
+      const m = l.validation[key] || {}, pp = l.validation.pure_pursuit || {};
+      return `<div class="counter"><h4>${levelName(l.difficulty)}<span>dificultad ${num(l.difficulty)}</span></h4>
+        <div class="lcd"><div class="cells">
+          <div class="cell wide"><small>Vueltas completadas</small><b>${digit(100 * (m.lap_success_rate || 0), 0)}<span class="unit">%</span></b></div>
+        </div><div class="foot">Pure pursuit ${pct(pp.lap_success_rate)} · progreso medio ${pct(m.mean_progress)}</div></div></div>`;
     })
     .join("");
-  $$("#policies .list-item").forEach((item) =>
-    item.addEventListener("click", () => {
-      simState.mode = "policy";
-      simState.key = item.dataset.policy;
-      go("simulation");
-    })
-  );
 }
 
 // ---------- training ----------
@@ -1109,7 +1092,7 @@ function renderTraining() {
     });
     return;
   }
-  el.innerHTML = "";
+  destroyChartsIn(el);
   TRAIN_METRICS.forEach(({ source, key, title, info }, i) => {
     const canvas = chartCard(el, `train-${i}`, title, info);
     makeChart(canvas, { type: "line", data: { datasets: groupedSeries(shown, source, key) }, options: lineOptions("pasos de entrenamiento") });
@@ -1124,7 +1107,7 @@ function metricsTable(rows) {
     if (k.endsWith("rate") || k === "mean_progress") return pct(v);
     return k === "mean_speed" ? num(v * 3.6, 0) : num(v);
   };
-  return `<table><thead><tr><th>piloto</th>${keys.map((k) => `<th>${METRIC_LABELS[k]}</th>`).join("")}</tr></thead><tbody>${Object.entries(rows)
+  return `<table><thead><tr><th>Piloto</th>${keys.map((k) => `<th>${cap(METRIC_LABELS[k])}</th>`).join("")}</tr></thead><tbody>${Object.entries(rows)
     .map(
       ([name, m]) =>
         `<tr><td><span class="dot" style="background:${policyColor(name)}"></span> ${esc(policyName(name))}</td>${keys
@@ -1138,11 +1121,11 @@ function renderValidation() {
   levelTabs($("#val-level"));
   const { difficulty, validation: V } = level();
   const n = D.meta.eval_tracks;
-  $("#val-note").textContent = `Cada piloto corre una vez las mismas ${n} pistas de validación (semillas de pista 1000 a ${999 + n}) en dificultad ${num(difficulty)}, sin azar en sus decisiones.`;
+  $("#val-note").textContent = `Cada piloto corre una vez las mismas ${n} pistas de validación (semillas de pista 1000 a ${999 + n}) en el nivel ${levelName(difficulty).toLowerCase()} (dificultad ${num(difficulty)}), sin azar en sus decisiones.`;
   $("#val-table").innerHTML = metricsTable(V);
   const keys = Object.keys(V);
   const el = $("#val-charts");
-  el.innerHTML = "";
+  destroyChartsIn(el);
   const pp = V.pure_pursuit || {};
   const K = D.meta.car;
   const bar = (id, title, values, max, info) =>
@@ -1237,7 +1220,8 @@ function renderStatistics() {
     body.innerHTML = `<div class="card empty">${icon("alert")}<p>Este data.js es anterior a la estadística. Vuelve a generarlo con <code>make dashboard</code>.</p></div>`;
     return;
   }
-  $("#stat-note").textContent = `Dificultad ${num(L.difficulty)}. Todos los pilotos corrieron las mismas ${D.meta.eval_tracks} pistas de validación, así que cada comparación se hace pista a pista.`;
+  $("#stat-note").textContent = `Nivel ${levelName(L.difficulty).toLowerCase()} (dificultad ${num(L.difficulty)}). Todos los pilotos corrieron las mismas ${D.meta.eval_tracks} pistas de validación, así que cada comparación se hace pista a pista.`;
+  destroyChartsIn(body);
   body.innerHTML = `<div class="card seed-explain">
       <div><h4>Semilla de <em>pista</em></h4><p>Decide qué circuito se genera. La misma semilla de pista da siempre el mismo trazado, así que todos los pilotos se miden en las mismas curvas.</p></div>
       <div><h4>Semilla de <em>entrenamiento</em></h4><p>Decide el azar de un entrenamiento, como los pesos con los que arranca la red o el orden de las pistas. Cada versión del modelo se entrenó 3 veces, con las semillas 0, 1 y 2.</p></div>
@@ -1256,7 +1240,7 @@ function renderStatistics() {
     const seeds = s.lap_rate_per_seed ? s.lap_rate_per_seed.map(pct).join(", ") : "-";
     return `<tr><td><span class="dot" style="background:${policyColor(k)}"></span> ${esc(policyName(k))}</td><td>${s.n_models}</td><td>${s.n_tracks}</td><td>${pct(s.lap_rate)}</td><td>${fmtCi(s.lap_rate_ci)}</td><td>${seeds}</td><td>${fmtCi(s.lap_rate_seed_ci)}</td><td>${pct(s.progress)}</td><td>${fmtCi(s.progress_ci)}</td></tr>`;
   });
-  const intervals = `<table><thead><tr><th>piloto</th><th>entrenamientos</th><th>pistas</th><th>vueltas</th><th>intervalo al 95 %</th><th>por semilla de entrenamiento</th><th>intervalo t de Student</th><th>vuelta recorrida</th><th>intervalo al 95 %</th></tr></thead><tbody>${rows.join("")}</tbody></table>`;
+  const intervals = `<table><thead><tr><th>Piloto</th><th>Entrenamientos</th><th>Pistas</th><th>Vueltas</th><th>Intervalo al 95 %</th><th>Por semilla de entrenamiento</th><th>Intervalo t de Student</th><th>Vuelta recorrida</th><th>Intervalo al 95 %</th></tr></thead><tbody>${rows.join("")}</tbody></table>`;
 
   const tests = S.tests.map((t) => {
     const pa = t.a.startsWith("pooled:"), pb = t.b.startsWith("pooled:");
@@ -1264,7 +1248,7 @@ function renderStatistics() {
     const verdict = t.p_holm == null ? `<span class="sig">sin pistas que comparar</span>` : t.p_holm < 0.05 ? `<span class="sig yes">distintos</span>` : `<span class="sig">sin pruebas de diferencia</span>`;
     return `<tr><td class="t">${esc(policyName(t.a))} contra ${esc(policyName(t.b))}</td><td class="t">${TEST_NAMES[t.test] || esc(t.test)}${which}</td><td class="t">${testDetail(t)}</td><td>${fmtP(t.p)}</td><td>${fmtP(t.p_holm)}</td><td>${verdict}</td></tr>`;
   });
-  const testTable = `<table><thead><tr><th style="text-align:left">pareja</th><th style="text-align:left">test</th><th style="text-align:left">detalle</th><th>p</th><th>p con Holm</th><th>resultado</th></tr></thead><tbody>${tests.join("")}</tbody></table>`;
+  const testTable = `<table><thead><tr><th style="text-align:left">Pareja</th><th style="text-align:left">Test</th><th style="text-align:left">Detalle</th><th>p</th><th>p con Holm</th><th>Resultado</th></tr></thead><tbody>${tests.join("")}</tbody></table>`;
   const friedman = S.friedman == null ? "" : `<p class="test-note">Friedman compara a todos los pilotos a la vez con la vuelta recorrida en cada pista y da p = ${fmtP(S.friedman)}. ${S.friedman < 0.05 ? "Al menos uno rinde distinto al resto." : "No hay pruebas de que alguno rinda distinto al resto."}</p>`;
   const note = S.note ? `<p class="test-note">Algunas versiones tienen distinto número de semillas de entrenamiento y no se pueden emparejar, así que aquí no hay tests.</p>` : "";
 
@@ -1392,7 +1376,7 @@ const simState = { mode: "policy", key: null, seed: null, playing: false, t: 0, 
 function simItems() {
   return simState.mode === "policy"
     ? Object.keys(D.replays).map((k) => [k, policyName(k)])
-    : Object.keys(D.tracks).map((s) => [s, `pista ${s}`]);
+    : Object.keys(D.tracks).map((s) => [s, `Pista ${s}`]);
 }
 
 function renderSimulation() {
@@ -1421,7 +1405,7 @@ function renderSimulation() {
 
 function renderSimTiles() {
   const tiles = simState.mode === "policy"
-    ? D.replays[simState.key].map((ep) => ({ ep, key: simState.key, title: `pista ${ep.seed}` }))
+    ? D.replays[simState.key].map((ep) => ({ ep, key: simState.key, title: `Pista ${ep.seed}` }))
     : Object.entries(D.replays).map(([key, eps]) => ({ ep: eps.find((e) => String(e.seed) === String(simState.seed)), key, title: policyName(key) }));
   const grid = $("#sim-grid");
   grid.innerHTML = "";
@@ -1431,7 +1415,7 @@ function renderSimTiles() {
       "beforeend",
       `<div class="card tile"><canvas id="sim-${i}"></canvas><div class="tile-body">
         <span class="tile-title">${dot}${esc(t.title)}</span>
-        <div class="tile-foot"><span id="sim-info-${i}"></span><span>${episodeNote(t.ep)}</span></div></div></div>`
+        <div class="tile-foot"><span id="sim-info-${i}"></span><span>${cap(episodeNote(t.ep))}</span></div></div></div>`
     );
     return { ...t, canvas: $(`#sim-${i}`), i };
   });
@@ -1488,7 +1472,7 @@ function renderPhysics() {
     physState.mode = m;
     renderPhysics();
   });
-  const items = physState.mode === "policy" ? Object.keys(D.replays).map((k) => [k, policyName(k)]) : Object.keys(D.tracks).map((s) => [s, `pista ${s}`]);
+  const items = physState.mode === "policy" ? Object.keys(D.replays).map((k) => [k, policyName(k)]) : Object.keys(D.tracks).map((s) => [s, `Pista ${s}`]);
   const value = physState.mode === "policy" ? physState.key : String(physState.seed);
   wheelPicker($("#phys-wheel"), items, items.findIndex((i) => String(i[0]) === value), (v) => {
     if (physState.mode === "policy") physState.key = v;
@@ -1503,7 +1487,7 @@ function renderPhysicsBody() {
   const ep = D.replays[key].find((e) => String(e.seed) === seed);
   const track = D.tracks[seed];
   const el = $("#phys-charts");
-  el.innerHTML = "";
+  destroyChartsIn(el);
   if (!ep || !track) {
     el.innerHTML = `<div class="card empty">No hay repetición de ${esc(policyName(key))} en la pista ${esc(seed)}.</div>`;
     return;
@@ -1512,35 +1496,36 @@ function renderPhysicsBody() {
   const t = f.x.map((_, i) => +(i * ep.dt).toFixed(2));
   const color = policyColor(key);
   const series = (arr, label, c = color, extra = {}) => ({ label, data: arr.map((y, i) => ({ x: t[i], y })), borderColor: c, backgroundColor: c, borderWidth: 2, ...extra });
-  const flat = (y, label, c) => series(t.map(() => y), label, c, { borderDash: [4, 4], borderWidth: 1, pointHoverRadius: 0 });
+  const flat = (y, label, c) => ({ label, data: [{ x: t[0], y }, { x: t[t.length - 1], y }], borderColor: c, borderDash: [4, 4], borderWidth: 1, pointHoverRadius: 0 });
+  const fast = (extra = {}) => lineOptions("tiempo [s]", { fast: true, ...extra });
   const half = track.width / 2, wall = half + track.width;
 
   makeChart(chartCard(el, "ph-speed", "Velocidad [km/h]"), {
     type: "line",
     data: { datasets: [series(f.v.map((v) => v * 3.6), "hacia delante"), series(f.v.map((v, i) => Math.hypot(v, f.v_lat[i]) * 3.6), "total", css("--c3"))] },
-    options: lineOptions("tiempo [s]"),
+    options: fast(),
   });
   makeChart(chartCard(el, "ph-slip", "Derrape lateral [km/h]"), {
     type: "line",
     data: { datasets: [series(f.v_lat.map((v) => v * 3.6), "derrape", css("--accent"))] },
-    options: lineOptions("tiempo [s]", { legend: false }),
+    options: fast({ legend: false }),
   });
   makeChart(chartCard(el, "ph-steer", "Dirección del volante [-1, 1] y ángulo de rueda"), {
     type: "line",
     data: { datasets: [series(f.steer_cmd, "volante [-1, 1]", css("--c3")), series(f.steer, "ángulo de rueda [rad]")] },
-    options: lineOptions("tiempo [s]"),
+    options: fast(),
   });
   makeChart(chartCard(el, "ph-lat", "Desplazamiento lateral [m]", {
     what: "Distancia del coche a la línea central de la pista. Las líneas añil marcan el borde del asfalto, y las rojas, el muro.",
   }), {
     type: "line",
     data: { datasets: [series(f.lateral, "desplazamiento"), flat(half, "_g1", css("--good")), flat(-half, "_g2", css("--good")), flat(wall, "_w1", css("--accent")), flat(-wall, "_w2", css("--accent"))] },
-    options: lineOptions("tiempo [s]", { legend: false }),
+    options: fast({ legend: false }),
   });
   makeChart(chartCard(el, "ph-throttle", "Acelerador y freno"), {
     type: "line",
     data: { datasets: [series(f.throttle, "acelerador", css("--c5"), { fill: true, backgroundColor: alpha(css("--c5"), 0.15) })] },
-    options: lineOptions("tiempo [s]", { legend: false, y: { min: -1, max: 1 } }),
+    options: fast({ legend: false, y: { min: -1, max: 1 } }),
   });
 
   const bins = [0, 0.02, 0.05, 0.1, 0.2, 0.5, 2.01];
@@ -1565,7 +1550,7 @@ function renderPhysicsBody() {
   }), {
     type: "bar",
     data: { labels, datasets },
-    options: { interaction: { mode: "index", intersect: false }, plugins: { legend: { position: "bottom" } }, scales: { y: { min: 0, ticks: { callback: (v) => pct(v) } } } },
+    options: { animation: false, interaction: { mode: "index", intersect: false }, plugins: { legend: { position: "bottom" } }, scales: { y: { min: 0, ticks: { callback: (v) => pct(v) } } } },
   });
 
   const canvas = $("#phys-map");
@@ -1971,7 +1956,7 @@ function levelGrid() {
             <span class="stars">${"★".repeat(s)}${"☆".repeat(3 - s)}</span></button>`;
         })
         .join("");
-      return `<div class="world"><div class="world-name">mundo ${wi + 1} · <b>${WORLD_NAMES[wi % WORLD_NAMES.length]}</b> · dificultad ${num(d)}</div><div class="level-row">${cards}</div></div>`;
+      return `<div class="world"><div class="world-name">mundo ${wi + 1} · <b>${WORLD_NAMES[wi % WORLD_NAMES.length]}</b> · ${levelName(d).toLowerCase()}</div><div class="level-row">${cards}</div></div>`;
     })
     .join("");
 }
@@ -2185,33 +2170,24 @@ function bindRace() {
   });
 }
 
-// ---------- shell, menu, the kart line and the channel change ----------
+// ---------- shell, arrows, the kart line and the channel number ----------
 const nav = { kartX: null, osdTimer: 0 };
 
 function renderNav() {
-  const item = ([id, label, sub], i) =>
-    `<button data-view="${id}" class="${state.view === id ? "active" : ""}"><span>${label}</span><small>canal ${String(i + 1).padStart(2, "0")} · ${sub}</small></button>`;
-  $("#menu-panel").innerHTML = VIEWS.map(item).join("");
   $("#stops").innerHTML = VIEWS.map(([id, label]) => `<button data-view="${id}" class="${state.view === id ? "active" : ""}">${label}</button>`).join("");
-  $$("#menu-panel button, #stops button").forEach((b) =>
-    b.addEventListener("click", () => {
-      setMenu(false);
-      go(b.dataset.view);
-    })
-  );
+  $$("#stops button").forEach((b) => b.addEventListener("click", () => go(b.dataset.view)));
 }
 
-function setMenu(open) {
-  const panel = $("#menu-panel");
-  panel.classList.toggle("open", open);
-  panel.inert = !open;
-  $("#menu-btn").setAttribute("aria-expanded", String(open));
+// the pixel arrows step through the sections and wrap around at the ends
+function stepView(d) {
+  const i = VIEWS.findIndex((v) => v[0] === state.view);
+  go(VIEWS[(i + d + VIEWS.length) % VIEWS.length][0]);
 }
 
 // the kart recoils away from the new stop, then sprints to it and brakes with a small overshoot
 function moveKart(animate) {
   const stop = $(`#stops button[data-view="${state.view}"]`);
-  const line = $(".trackline");
+  const line = $(".track");
   if (!stop || !line) return;
   const target = stop.getBoundingClientRect().left + stop.offsetWidth / 2 - line.getBoundingClientRect().left - 24;
   const from = nav.kartX == null ? target : nav.kartX;
@@ -2240,51 +2216,16 @@ function moveKart(animate) {
 function showOsd(view) {
   const i = VIEWS.findIndex((v) => v[0] === view);
   const osd = $("#osd");
-  osd.innerHTML = `${String(i + 1).padStart(2, "0")}<small>${VIEWS[i][1]}</small>`;
+  osd.innerHTML = `${i + 1}<small>${VIEWS[i][1]}</small>`;
   osd.classList.add("on");
   clearTimeout(nav.osdTimer);
   nav.osdTimer = setTimeout(() => osd.classList.remove("on"), 1600);
 }
 
-// static noise for a moment while the picture rolls in, like tuning a channel
-function tune() {
-  const main = $("#main");
-  main.classList.remove("tuning");
-  void main.offsetWidth;
-  main.classList.add("tuning");
-  const c = $("#static");
-  const W = 180, H = 110;
-  [c.width, c.height] = [W, H];
-  const x = c.getContext("2d");
-  const img = x.createImageData(W, H);
-  c.hidden = false;
-  const t0 = performance.now(), total = 380;
-  const frame = (ts) => {
-    const k = (ts - t0) / total;
-    if (k >= 1) {
-      c.hidden = true;
-      return;
-    }
-    const roll = Math.floor((k * 3 * H) % H);
-    for (let j = 0; j < H; j++) {
-      const band = Math.abs(j - roll) < 8 ? 60 : 0;
-      for (let i = 0; i < W; i++) {
-        const v = Math.min(255, ((Math.random() * 255) | 0) + band), p = (j * W + i) * 4;
-        img.data[p] = img.data[p + 1] = img.data[p + 2] = v;
-        img.data[p + 3] = Math.round(255 * (1 - k * k));
-      }
-    }
-    x.putImageData(img, 0, 0);
-    requestAnimationFrame(frame);
-  };
-  requestAnimationFrame(frame);
-}
-
 const RENDER = {
   overview: () => {
     renderCluster();
-    renderBoard();
-    renderPolicies();
+    renderCounters();
     startHero();
   },
   race: renderRace,
@@ -2308,7 +2249,6 @@ function safeRender(view) {
     section.insertAdjacentHTML("beforeend", `<div class="card render-error">No se pudo dibujar esta sección. ${esc(err.message)}</div>`);
   }
   requestAnimationFrame(resizeCharts);
-  setTimeout(resizeCharts, 500);
 }
 
 function go(view, animate = true) {
@@ -2324,10 +2264,7 @@ function go(view, animate = true) {
   }
   renderNav();
   moveKart(animate && changed);
-  if (animate && changed) {
-    showOsd(view);
-    if (!REDUCED) tune();
-  }
+  if (animate && changed) showOsd(view);
   safeRender(view);
   if (changed) $("#screen").scrollTo({ top: 0, behavior: "auto" });
 }
@@ -2349,13 +2286,8 @@ function applyTheme(choice) {
 function bindShell() {
   $$("[data-goto]").forEach((b) => b.addEventListener("click", () => go(b.dataset.goto)));
   $$("#theme button").forEach((b) => b.addEventListener("click", () => applyTheme(b.dataset.themeSet)));
-  $("#menu-btn").addEventListener("click", (e) => {
-    e.stopPropagation();
-    setMenu(!$("#menu-panel").classList.contains("open"));
-  });
-  document.addEventListener("click", (e) => {
-    if (!e.target.closest("#menu-panel")) setMenu(false);
-  });
+  $("#nav-prev").addEventListener("click", () => stepView(-1));
+  $("#nav-next").addEventListener("click", () => stepView(1));
   $("#search").addEventListener("input", (e) => {
     state.search = e.target.value;
     if (state.view === "training") renderTraining();
@@ -2370,8 +2302,8 @@ function bindShell() {
   });
   ["#opt-lidar", "#opt-follow", "#opt-trail"].forEach((id) => $(id).addEventListener("change", drawSim));
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") setMenu(false);
     if (e.target.tagName === "INPUT" && e.target.type !== "checkbox" && e.target.type !== "range") return;
+    if (e.key === "[" || e.key === "]") stepView(e.key === "]" ? 1 : -1);
     if (e.key === "/" && state.view === "training") {
       e.preventDefault();
       $("#search").focus();
