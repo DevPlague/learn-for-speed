@@ -1,30 +1,53 @@
 .DEFAULT_GOAL := help
+
+# Windows (cmd, PowerShell) and Linux (bash) are both supported, the OS variable tells them apart
+ifeq ($(OS),Windows_NT)
+WINDOWS := 1
+else
 SHELL := /bin/bash
+endif
 
 IMAGE ?= learn-for-speed
 CMD   ?= python --version
 SEED  ?= 1000
 DIFFICULTY ?= 0.5
 RUNS  ?=
+SERVE ?= 1
+SEEDS ?= 0 1 2
 CONFIG ?= tiny
 POLICY ?= pure_pursuit
 MODEL ?=
 SPLIT ?= val
 N     ?= 20
 
+ifdef WINDOWS
+RUST_HELP = Rust not found. Install it from https://rustup.rs and open a new terminal
+UV_HELP = uv not found. Install: powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+else
 # rustup installs here, and a new login is needed before the shell knows about it
 export PATH := $(HOME)/.cargo/bin:$(PATH)
 RUST_HELP = Rust not found. Install: curl https://sh.rustup.rs -sSf | sh -s -- -y --profile minimal -c clippy -c rustfmt
+UV_HELP = uv not found. Install: curl -LsSf https://astral.sh/uv/install.sh | sh
+endif
 
 # ---- Local (uv) -----------------------------------------------------------------------------
 .PHONY: help
 help: ## Show this help
+ifdef WINDOWS
+	@powershell -NoProfile -Command "Get-Content $(firstword $(MAKEFILE_LIST)) | Select-String '^([a-zA-Z_-]+):.*## (.*)' | ForEach-Object { '  {0,-14} {1}' -f $$_.Matches[0].Groups[1].Value, $$_.Matches[0].Groups[2].Value }"
+else
 	@grep -hE '^[a-zA-Z_-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*## "}{printf "  \033[36m%-14s\033[0m %s\n",$$1,$$2}'
+endif
 
 .PHONY: setup
 setup: ## Create the Python env and build the Rust core (needs uv and Rust)
-	@command -v uv >/dev/null || { echo "uv not found. Install: curl -LsSf https://astral.sh/uv/install.sh | sh"; exit 1; }
+ifdef WINDOWS
+	@where uv >nul 2>nul || (echo $(UV_HELP) & exit 1)
+	@where cargo >nul 2>nul || (echo $(RUST_HELP) & exit 1)
+else
+	@command -v uv >/dev/null || { echo "$(UV_HELP)"; exit 1; }
 	@command -v cargo >/dev/null || { echo "$(RUST_HELP)"; exit 1; }
+endif
 	uv sync
 
 .PHONY: rust
@@ -65,6 +88,10 @@ train: SEED = 0
 train: ## Train PPO from configs/CONFIG.yaml into runs/, e.g. make train CONFIG=mvp SEED=1
 	uv run python -m learning.train --config configs/$(CONFIG).yaml --seed $(SEED)
 
+.PHONY: train-seeds
+train-seeds: ## Train several training seeds at once, e.g. make train-seeds CONFIG=final SEEDS="0 1 2"
+	uv run python -m learning.parallel --config configs/$(CONFIG).yaml --seeds $(SEEDS)
+
 .PHONY: eval
 eval: ## Evaluate a policy on validation tracks, e.g. make eval POLICY=ppo MODEL=runs/mvp_s0/best_model.zip
 	uv run python -m evaluation.evaluate --policy $(POLICY) $(if $(MODEL),--model $(MODEL)) \
@@ -75,15 +102,20 @@ tb: ## TensorBoard on http://localhost:6006 (reads ./runs)
 	uv run tensorboard --logdir runs --port 6006
 
 .PHONY: dashboard
-dashboard: ## Build the local dashboard into runs/dashboard, e.g. make dashboard RUNS="mvp_s0"
-	uv run python -m dashboard.build --runs $(RUNS)
+dashboard: ## Build the dashboard from the final runs and serve it at a local link, SERVE=0 builds only
+	uv run python -m dashboard.build $(if $(RUNS),--runs $(RUNS),) $(if $(filter 0,$(SERVE)),,--serve)
 
 .PHONY: clean
 clean: ## Remove caches (keeps runs/, videos/, models/)
+ifdef WINDOWS
+	@powershell -NoProfile -Command "Remove-Item -Recurse -Force .pytest_cache, .ruff_cache -ErrorAction SilentlyContinue; Get-ChildItem -Recurse -Directory -Filter __pycache__ | Remove-Item -Recurse -Force"
+else
 	rm -rf .pytest_cache .ruff_cache
 	find . -name __pycache__ -type d -prune -exec rm -rf {} +
+endif
 
 # ---- Docker (headless; the repo folder is bind-mounted, so outputs are saved locally) --------
+# These targets use id and X11, so they are for Linux only.
 # Runs as your own user so files written to ./runs etc. are not owned by root.
 DOCKER_RUN = docker run --rm -it --user $$(id -u):$$(id -g) \
 	-v "$(CURDIR)":/app -w /app -e HOME=/tmp -e MPLCONFIGDIR=/tmp/mpl $(IMAGE)

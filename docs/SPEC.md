@@ -14,7 +14,7 @@ Data flow is `sim` then `learning` then `evaluation`. `evaluation` also uses `si
 | `rust/` | S1 (Simulation) | Per-step physics, car, lidar and track queries |
 | `learning/` | S2 (Learning) | Reward, PPO training script, curriculum, checkpoints, logging |
 | `evaluation/` | S3 (Evaluation) | Baselines, evaluation on held-out track seeds, metrics, plots, videos |
-| `dashboard/` | S2 (Learning) | Local web dashboard with learning curves, validation tables, synced replays and physics plots |
+| `dashboard/` | S2 (Learning) | Dashboard, see Deploy below |
 | `configs/` | S2 | One YAML file per experiment |
 | `tests/` | each owner tests their folder | pytest, run with `make test` |
 | `docs/` | everyone | PLAN.md for planning, SPEC.md for this contract, PHYSICS.md for the physics guide |
@@ -69,10 +69,7 @@ The observation size is exported as `OBS_DIM` in `sim/env.py` so learning and ev
 ### Dashboard
 | Item | Contract |
 |---|---|
-| Build | `python -m dashboard.build --runs <run> [...]` reads every `runs/*/config.yaml` with its `progress.csv` and `val_curve.csv`, evaluates the chosen runs (`best_model.zip`), pure pursuit and random on validation track seeds at each of `--difficulties` (default 0, 0.5 and 1), adds intervals and paired tests from `evaluation/stats.py` per difficulty, records replays at the first difficulty and writes `runs/dashboard/` |
-| Page | `runs/dashboard/index.html` opens from disk with no server. Static files live in `dashboard/static/`, data goes to `data.js`, Chart.js is vendored |
-| Replays | `record_episode(policy, seed, difficulty, env=None)` in `dashboard/record.py` returns per step car state, lateral offset, progress, grass flag, action and lidar, plus the outcome |
-| Test split | The page only shows test numbers from S3 folders `runs/eval_*_test/eval.json` and never runs test track seeds itself |
+| Deploy | `make dashboard` builds the dashboard from the final runs `final_s0` to `final_s2`, serves it on this computer and prints the local link (`http://localhost:8000/`), Ctrl+C stops it. It refuses to build when a final run is missing and prints the training command instead. `make dashboard SERVE=0` only builds into `runs/dashboard/`. |
 
 ### Rust core
 The crate in `rust/` builds the Python module `racing_core` with PyO3 and maturin. It is a uv path dependency, so `make setup` builds it and `uv run` rebuilds it when a Rust file changes. `make rust` forces a rebuild. Docker builds it inside the image, so changing `rust/` needs `make docker-build` again.

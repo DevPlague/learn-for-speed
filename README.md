@@ -58,7 +58,7 @@ The GIF above is the pure pursuit baseline on validation track 1000. The yellow 
 
 **Dashboard**
 
-- One static page built from `runs/`. Learning curves, validation tables, synced replays of every policy with lidar and follow camera, and physics plots. No server needed.
+- `make dashboard` builds the dashboard from the final runs `final_s0` to `final_s2`, serves it on this computer and prints the local link (`http://localhost:8000/`), Ctrl+C stops it. It refuses to build when a final run is missing and prints the training command instead. `make dashboard SERVE=0` only builds into `runs/dashboard/`.
 
 ## 📦 Install
 
@@ -100,7 +100,7 @@ Every command runs from the repo folder. `make help` lists them all, and variabl
 | Env speed and track generation time | `make bench` |
 | Drive a track by keyboard | `make play SEED=1002 DIFFICULTY=1` |
 | Train one training seed of a config into `runs/<config>_s<seed>/` | `make train CONFIG=mvp SEED=0` |
-| Train 3 training seeds at once, each run uses about one core | `for s in 0 1 2; do make train CONFIG=mvp SEED=$s & done; wait` |
+| Train 3 training seeds at once on Windows or Linux, each run uses about one core | `make train-seeds CONFIG=final SEEDS="0 1 2"` |
 | Watch training curves on http://localhost:6006 | `make tb` |
 | Evaluate a baseline on validation tracks | `make eval POLICY=pure_pursuit N=50 DIFFICULTY=1` |
 | Evaluate PPO, one zip per training seed | `make eval POLICY=ppo MODEL="runs/mvp_s0/best_model.zip runs/mvp_s1/best_model.zip"` |
@@ -110,7 +110,7 @@ Every command runs from the repo folder. `make help` lists them all, and variabl
 | Bar chart and failure plots | `evaluation.plots bars --evals name=eval.json ...` and `evaluation.plots failures --policy ppo --model runs/mvp_s1/model.zip` |
 | Watch a run drive 6 tracks, checkpoint after checkpoint | `make run CMD="python -m learning.watch --run runs/final_s2 --tracks 6"` |
 | Side by side video into `videos/` | `make run CMD="python -m evaluation.demo --policies ppo pure_pursuit --model runs/mvp_s0/best_model.zip --seed 1000"` |
-| Dashboard into `runs/dashboard/index.html`, with validation and statistics at difficulty 0, 0.5 and 1 | `make dashboard RUNS="final_s0 final_s1 final_s2"` |
+| Build the dashboard and serve it at a local link | `make dashboard`, or `make dashboard SERVE=0` to build only |
 | Any command inside the env | `make run CMD="python x.py"` |
 
 `make eval` defaults to the first 20 validation tracks at difficulty 0.5 and writes `runs/eval_<policy>_<split>/eval.json`. Pass `--out` through `make run CMD="python -m evaluation.evaluate ..."` to keep several difficulties apart.

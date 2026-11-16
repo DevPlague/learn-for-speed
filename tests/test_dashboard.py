@@ -3,10 +3,10 @@ import json
 import numpy as np
 import pytest
 
-from dashboard.build import build, level_stats
+from dashboard.build import build, level_stats, race_tracks, require_runs, run_label
 from dashboard.record import record_episode
 from evaluation.baselines import PurePursuitPolicy
-from evaluation.evaluate import run_episode
+from evaluation.evaluate import make_policy, run_episode
 from sim.env import RacingEnv
 
 
@@ -56,6 +56,31 @@ def test_build_writes_validation_replays_and_test_results(tiny_run, tmp_path):
             ("pure_pursuit", "random"),
         }
         assert all(t["p_holm"] is None or t["p_holm"] >= t["p"] for t in tests)
-    assert list(payload["tracks"]) == ["1000"] and len(payload["replays"]["random"]) == 1
+    (seed,) = payload["tracks"]
+    assert 1000 <= int(seed) <= 1999 and len(payload["replays"]["random"]) == 1
+    assert payload["meta"]["replay_seeds"] == [int(seed)]
     assert payload["test"] == {"eval_ppo_test": {"lap_success_rate": 0.5}}
     assert payload["runs"][0]["val_curve"]["timesteps"] == [64.0, 128.0]
+    assert payload["race"]["policy"] == f"ppo:{tiny_run.name}"
+    assert payload["meta"]["car"]["DT"] == 0.05 and payload["meta"]["car"]["WALL_OFFSET"] == 12.0
+
+
+def test_race_keeps_only_lapped_tracks_with_the_lap_as_ghost():
+    env = RacingEnv()
+    lapped = race_tracks(make_policy("pure_pursuit", env), [0.0], [1000, 1001], env)
+    assert [r["seed"] for r in lapped] == [1000, 1001]
+    for r in lapped:
+        ghost = r["ghost"]
+        assert len(ghost["x"]) == len(ghost["progress"]) == round(r["lap_time"] / 0.05)
+        assert ghost["progress"][-1] > 0.99
+        start = (ghost["x"][0], ghost["y"][0])
+        assert start == pytest.approx(tuple(r["track"]["centerline"][0]), abs=0.02)
+    assert race_tracks(make_policy("random", env), [0.0], [1000, 1001], env) == []
+
+
+def test_require_runs_names_runs_without_a_model_and_labels_are_readable(tmp_path):
+    (tmp_path / "final_s0").mkdir()
+    (tmp_path / "final_s0" / "best_model.zip").write_bytes(b"")
+    assert require_runs(tmp_path, ["final_s0", "final_s1"]) == ["final_s1"]
+    assert run_label("final_s2") == "Final · semilla 2"
+    assert run_label("unknown_cfg") == "unknown_cfg"

@@ -1,157 +1,179 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="es">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>learn-for-speed dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Learn for Speed</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' shape-rendering='crispEdges'%3E%3Crect x='4' y='2' width='2' height='28' fill='%232d2a2e'/%3E%3Cg fill='%232d2a2e'%3E%3Crect x='6' y='4' width='24' height='18' fill='%23efe6d2'/%3E%3Crect x='6' y='4' width='6' height='6'/%3E%3Crect x='18' y='4' width='6' height='6'/%3E%3Crect x='12' y='10' width='6' height='6'/%3E%3Crect x='24' y='10' width='6' height='6'/%3E%3Crect x='6' y='16' width='6' height='6'/%3E%3Crect x='18' y='16' width='6' height='6'/%3E%3C/g%3E%3Crect x='6' y='4' width='24' height='18' fill='none' stroke='%23d9483f' stroke-width='1.5'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Oxygen:wght@400;700&family=Press+Start+2P&display=swap">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <aside class="sidebar">
-    <div class="brand">
-      <div class="logo" data-icon="flag"></div>
-      <div>
-        <div class="brand-name">learn-for-speed</div>
-        <div class="brand-sub">PPO lab</div>
-      </div>
-    </div>
-    <label class="search">
-      <span data-icon="search"></span>
-      <input id="search" placeholder="Search runs...">
-      <kbd>/</kbd>
-    </label>
-    <div class="nav-label">Main</div>
-    <nav id="nav"></nav>
-    <div class="runs-block">
-      <div class="nav-label row">Runs <span id="run-count" class="badge"></span></div>
-      <ul id="run-list"></ul>
-    </div>
-    <div class="sidebar-foot">
-      <div class="user">
-        <div class="avatar">S2</div>
-        <div>
-          <div class="user-name">Learning</div>
-          <div class="user-sub" id="meta-line"></div>
-        </div>
-      </div>
-      <div class="theme" id="theme">
-        <button data-theme-set="light"><span data-icon="sun"></span>Light</button>
-        <button data-theme-set="dark"><span data-icon="moon"></span>Dark</button>
-        <button data-theme-set="system"><span data-icon="monitor"></span>System</button>
-      </div>
-    </div>
-  </aside>
-
-  <main>
-    <header class="topbar">
-      <button class="crumb" id="crumb"><span data-icon="chevron"></span><span id="crumb-text">Overview</span></button>
-      <div class="top-actions">
-        <button class="icon-btn" id="toggle-side" title="Toggle sidebar"><span data-icon="menu"></span></button>
-      </div>
-    </header>
-
-    <section class="view" data-view="overview">
-      <div class="hero card">
-        <div class="hero-text">
-          <div class="eyebrow">Welcome back</div>
-          <h1>Learning to race</h1>
-          <p>PPO against baselines on held-out validation tracks.</p>
-          <div class="row gap">
-            <button class="btn dark" data-goto="simulation"><span data-icon="play"></span>Watch replay</button>
-            <button class="btn ghost" data-goto="training"><span data-icon="chart"></span>Learning curves</button>
+  <div class="tv">
+    <div class="screen-wrap">
+      <div class="screen" id="screen">
+        <header class="topbar">
+          <div class="bar">
+            <div class="wordmark"><canvas class="flag" id="flag" width="13" height="9" aria-hidden="true"></canvas><span>Learn for Speed</span></div>
+            <div class="theme" id="theme" role="group" aria-label="Tema">
+              <button data-theme-set="light" title="Claro" aria-label="Tema claro"><span data-icon="sun"></span></button>
+              <button data-theme-set="dark" title="Oscuro" aria-label="Tema oscuro"><span data-icon="moon"></span></button>
+              <button data-theme-set="system" title="Sistema" aria-label="Tema del sistema"><span data-icon="monitor"></span></button>
+            </div>
+            <button class="menu-btn" id="menu-btn" aria-expanded="false" aria-controls="menu-panel"><span class="burger"><i></i><i></i><i></i></span>Menú</button>
           </div>
-        </div>
-        <div class="hero-art"><svg id="hero-track" viewBox="0 0 400 220" preserveAspectRatio="xMidYMid slice"></svg></div>
-      </div>
+          <div class="trackline">
+            <div class="road"></div>
+            <div class="stops" id="stops"></div>
+            <canvas class="kart" id="kart" width="24" height="12" aria-hidden="true"></canvas>
+          </div>
+        </header>
 
-      <div class="row between">
-        <div class="tabs" id="group-tabs"></div>
-        <div class="pill" id="difficulty-pill"></div>
-      </div>
+        <main id="main">
+          <section class="view" data-view="overview">
+            <div class="hero">
+              <div class="hero-art"><canvas id="hero-car" width="692" height="381" aria-label="Coche en marcha"></canvas></div>
+              <div class="hero-text">
+                <h1>Un coche que aprendió a correr <em>por sí mismo</em></h1>
+                <p>Un coche entrenado con PPO recorre circuitos generados al azar que nunca ha visto. Solo sabe lo que le cuentan sus sensores, y aun así compite con un piloto programado a mano que sí ve el mapa.</p>
+                <div class="row gap wrap">
+                  <button class="btn solid" data-goto="race"><span data-icon="flag"></span>Corre contra el modelo</button>
+                  <button class="btn" data-goto="simulation"><span data-icon="play"></span>Ver repeticiones</button>
+                </div>
+              </div>
+            </div>
+            <div class="cluster" id="cluster"></div>
+            <div class="overview-grid">
+              <div>
+                <h3>Repeticiones del modelo final</h3>
+                <div class="grid-3" id="board"></div>
+              </div>
+              <div>
+                <h3>Pilotos</h3>
+                <div class="card list" id="policies"></div>
+              </div>
+            </div>
+          </section>
 
-      <div class="grid-main">
-        <div class="col">
-          <h2><span data-icon="target"></span>Headline metrics</h2>
-          <div class="grid-2" id="kpis"></div>
-          <h2><span data-icon="eye"></span>Replay board</h2>
-          <div class="grid-3" id="board"></div>
-        </div>
-        <div class="col">
-          <h2><span data-icon="layers"></span>Policies</h2>
-          <div class="card list" id="policies"></div>
-          <h3>Quick stats</h3>
-          <div class="grid-2 small" id="stats"></div>
-        </div>
-      </div>
-    </section>
+          <section class="view" data-view="race" hidden>
+            <div class="row between wrap">
+              <div class="head">
+                <h2>Carrera <em>contra el modelo</em></h2>
+                <p class="muted" id="race-note"></p>
+              </div>
+              <label class="toggle"><input type="checkbox" id="race-assist" checked> Asistencia de dirección</label>
+            </div>
+            <div class="cabinet">
+              <div class="marquee">Learn for Speed · Arcade</div>
+              <div class="arcade-screen">
+                <canvas id="race-canvas" tabindex="0" aria-label="Pista de carrera"></canvas>
+                <div class="hud8" id="race-hud" hidden></div>
+                <div class="arcade" id="race-overlay"></div>
+                <canvas class="fx" id="race-fx" hidden></canvas>
+                <div class="keys8" id="race-keys" hidden>
+                  <span class="k"><span>↑</span><span>W</span></span><span>acelerar</span>
+                  <span class="k"><span>↓</span><span>S</span></span><span>frenar y atrás</span>
+                  <span class="k"><span>←</span><span>→</span><span>A D</span></span><span>girar</span>
+                  <span class="k"><span>R</span></span><span>reiniciar</span>
+                  <span class="k"><span>ESC</span></span><span>niveles</span>
+                </div>
+              </div>
+              <div class="control-panel" aria-hidden="true"><span class="stick"></span><span class="pbuttons"><i></i><i></i></span></div>
+            </div>
+            <div class="pad" id="race-pad">
+              <button data-key="left">Izq</button><button data-key="right">Der</button>
+              <button data-key="down">Freno</button><button data-key="up">Gas</button>
+            </div>
+          </section>
 
-    <section class="view" data-view="training">
-      <h2><span data-icon="chart"></span>Training curves</h2>
-      <p class="muted">Mean line per config, band shows plus or minus one std when a config has several seeds.</p>
-      <div class="chips" id="run-chips"></div>
-      <div class="grid-2" id="train-charts"></div>
-    </section>
+          <section class="view" data-view="training" hidden>
+            <div class="head">
+              <h2>Curvas de <em>entrenamiento</em></h2>
+              <p class="muted">Cada línea es la media de las semillas de entrenamiento de una versión del modelo, y la banda muestra cuánto se separan entre sí.</p>
+            </div>
+            <div class="row wrap">
+              <label class="search"><span data-icon="search"></span><input id="search" placeholder="Buscar runs"><kbd>/</kbd></label>
+              <button class="btn small" id="runs-all">Todas</button>
+              <button class="btn small" id="runs-none">Ninguna</button>
+              <span class="pill" id="run-count"></span>
+            </div>
+            <div class="run-groups" id="run-groups"></div>
+            <div class="grid-2" id="train-charts"></div>
+          </section>
 
-    <section class="view" data-view="validation">
-      <div class="row between wrap">
-        <h2><span data-icon="check"></span>Validation</h2>
-        <div class="tabs" id="val-level"></div>
-      </div>
-      <p class="muted" id="val-note"></p>
-      <div class="card"><div class="table-wrap" id="val-table"></div></div>
-      <div class="grid-2" id="val-charts"></div>
-    </section>
+          <section class="view" data-view="validation" hidden>
+            <div class="row between wrap">
+              <h2>Validación</h2>
+              <div class="tabs" id="val-level"></div>
+            </div>
+            <p class="muted" id="val-note"></p>
+            <div class="card"><div class="table-wrap" id="val-table"></div></div>
+            <div class="grid-2" id="val-charts"></div>
+          </section>
 
-    <section class="view" data-view="statistics">
-      <div class="row between wrap">
-        <h2><span data-icon="target"></span>Statistics</h2>
-        <div class="tabs" id="stat-level"></div>
-      </div>
-      <p class="muted" id="stat-note"></p>
-      <div class="stack" id="stat-body"></div>
-    </section>
+          <section class="view" data-view="statistics" hidden>
+            <div class="row between wrap">
+              <h2>Estadística</h2>
+              <div class="tabs" id="stat-level"></div>
+            </div>
+            <p class="muted" id="stat-note"></p>
+            <div class="stack" id="stat-body"></div>
+          </section>
 
-    <section class="view" data-view="test">
-      <h2><span data-icon="lock"></span>Test</h2>
-      <div id="test-body"></div>
-    </section>
+          <section class="view" data-view="test" hidden>
+            <h2>Test</h2>
+            <div id="test-body"></div>
+          </section>
 
-    <section class="view" data-view="simulation">
-      <div class="row between wrap">
-        <h2><span data-icon="play"></span>Simulation replay</h2>
-        <div class="tabs" id="sim-mode"></div>
-      </div>
-      <div class="card controls">
-        <select id="sim-pick"></select>
-        <button class="btn dark" id="play"><span data-icon="play"></span>Play</button>
-        <div class="seg" id="speed"></div>
-        <input type="range" id="scrub" min="0" max="1000" value="0">
-        <span class="mono" id="clock">0.0 s</span>
-        <label class="toggle"><input type="checkbox" id="opt-lidar"> lidar</label>
-        <label class="toggle"><input type="checkbox" id="opt-follow"> follow</label>
-        <label class="toggle"><input type="checkbox" id="opt-trail" checked> trail</label>
-      </div>
-      <div class="grid-3" id="sim-grid"></div>
-    </section>
+          <section class="view" data-view="simulation" hidden>
+            <div class="row between wrap">
+              <h2>Repeticiones</h2>
+              <div class="tabs" id="sim-mode"></div>
+            </div>
+            <div class="with-wheel">
+              <div class="wheel" id="sim-wheel"></div>
+              <div class="stack">
+                <div class="card controls">
+                  <button class="btn dark" id="play"><span data-icon="play"></span>Reproducir</button>
+                  <div class="seg" id="speed"></div>
+                  <input type="range" id="scrub" min="0" max="1000" value="0" aria-label="Tiempo de la repetición">
+                  <span class="mono" id="clock">0,0 s</span>
+                  <label class="toggle"><input type="checkbox" id="opt-lidar"> Lidar</label>
+                  <label class="toggle"><input type="checkbox" id="opt-follow"> Seguir</label>
+                  <label class="toggle"><input type="checkbox" id="opt-trail" checked> Rastro</label>
+                </div>
+                <div class="grid-3" id="sim-grid"></div>
+              </div>
+            </div>
+          </section>
 
-    <section class="view" data-view="physics">
-      <div class="row between wrap">
-        <h2><span data-icon="gauge"></span>Physics and behaviour</h2>
-        <div class="row gap">
-          <select id="phys-policy"></select>
-          <select id="phys-seed"></select>
-        </div>
+          <section class="view" data-view="physics" hidden>
+            <div class="row between wrap">
+              <h2>Física y <em>conducta</em></h2>
+              <div class="tabs" id="phys-mode"></div>
+            </div>
+            <div class="with-wheel">
+              <div class="wheel" id="phys-wheel"></div>
+              <div class="grid-main">
+                <div class="col"><div class="grid-2" id="phys-charts"></div></div>
+                <div class="col">
+                  <div class="card"><canvas id="phys-map" height="300"></canvas><div class="legend" id="phys-legend"></div></div>
+                  <h3>Fallos de PPO</h3>
+                  <div class="card list" id="failures"></div>
+                </div>
+              </div>
+            </div>
+          </section>
+        </main>
       </div>
-      <div class="grid-main">
-        <div class="col"><div class="grid-2" id="phys-charts"></div></div>
-        <div class="col">
-          <div class="card"><canvas id="phys-map" height="300"></canvas><div class="legend" id="phys-legend"></div></div>
-          <h3>Failures</h3>
-          <div class="card list" id="failures"></div>
-        </div>
-      </div>
-    </section>
-  </main>
+      <canvas id="static" hidden></canvas>
+      <div class="osd" id="osd" aria-hidden="true"></div>
+      <nav class="menu-panel" id="menu-panel" aria-label="Secciones" inert></nav>
+      <div class="glass" aria-hidden="true"></div>
+    </div>
+  </div>
 
   <script src="vendor/chart.umd.min.js"></script>
   <script src="data.js"></script>

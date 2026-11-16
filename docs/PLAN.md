@@ -59,7 +59,7 @@ If the deadline is earlier, cut from the bottom: Stretch, then training seeds (k
 - [x] T05 (S1) Tests: geometry, physics, `check_env`, reproducibility with track seeds. S3 may add more (2026-11-05)
 - [x] T07 (S2) Training script: SB3 PPO, parallel envs, config file per run, validation tracks, checkpoints, TensorBoard (2026-11-06)
 - [x] T08 (S2) First MVP run on gentle tracks, 3 training seeds, evaluated on validation. Gate 1 passes, MVP 70% not met because one training seed never starts (2026-11-09)
-- [x] T18 (S2) Local dashboard with training curves, validation and test tables, synced replay grid and physics plots, built from runs/ (2026-11-09)
+- [x] T18 (S2) Dashboard (2026-11-09)
 - [x] T14 (S3) Videos side by side vs pure pursuit, failure case, lidar view, trajectory figure (2026-11-10)
 - [x] T09 (S2) Adaptive curriculum with the overspeed penalty and mixed difficulties, all 3 training seeds reach difficulty 1 (2026-11-15)
 - [x] T11 (S2) Final runs, 3 training seeds of `configs/final.yaml`, 95.7% laps on test at difficulty 1 (2026-11-15)
