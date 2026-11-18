@@ -102,4 +102,4 @@ A track seed picks the circuit. The three ranges never overlap, and the evaluati
 | Validation | 1000 to 1999 | Development and model selection, the default of `make eval` |
 | Test | 10000 to 99999 | Final results only, with `SPLIT=test`, never for tuning |
 
-A training seed is something else. It is the 0, 1 or 2 in run names like `final_s0`, and it fixes the starting weights of the network and the randomness of PPO. One run uses one training seed and thousands of track seeds, and the three runs of a config are three independent trainings of the same method.
+A training seed is the 0, 1 or 2 in run names like `final_s0`, and it fixes the starting weights of the network and the randomness of PPO. One run uses one training seed and thousands of track seeds, and the three runs of a config are three independent trainings of the same method.
