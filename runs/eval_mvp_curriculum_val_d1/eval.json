@@ -1,0 +1,990 @@
+{
+  "args": {
+    "policy": "ppo",
+    "model": [
+      "runs/mvp_curriculum_s0/best_model.zip",
+      "runs/mvp_curriculum_s1/best_model.zip",
+      "runs/mvp_curriculum_s2/best_model.zip"
+    ],
+    "split": "val",
+    "n": 50,
+    "difficulty": 1.0,
+    "out": "runs/eval_mvp_curriculum_val_d1"
+  },
+  "seeds": [
+    1000,
+    1001,
+    1002,
+    1003,
+    1004,
+    1005,
+    1006,
+    1007,
+    1008,
+    1009,
+    1010,
+    1011,
+    1012,
+    1013,
+    1014,
+    1015,
+    1016,
+    1017,
+    1018,
+    1019,
+    1020,
+    1021,
+    1022,
+    1023,
+    1024,
+    1025,
+    1026,
+    1027,
+    1028,
+    1029,
+    1030,
+    1031,
+    1032,
+    1033,
+    1034,
+    1035,
+    1036,
+    1037,
+    1038,
+    1039,
+    1040,
+    1041,
+    1042,
+    1043,
+    1044,
+    1045,
+    1046,
+    1047,
+    1048,
+    1049
+  ],
+  "metrics": {
+    "n_episodes": 150,
+    "n_models": 3,
+    "lap_success_rate": 0.2866666666666667,
+    "lap_success_rate_std": 0.4054078878802872,
+    "off_track_rate": 0.6866666666666666,
+    "off_track_rate_std": 0.4151572660517404,
+    "stuck_rate": 0.02666666666666667,
+    "stuck_rate_std": 0.018856180831641266,
+    "mean_lap_time": 34.882558139534886,
+    "mean_lap_time_std": 0.0,
+    "mean_speed": 13.116074983955365,
+    "mean_speed_std": 1.2560876858544574,
+    "mean_progress": 0.496623113238608,
+    "mean_progress_std": 0.32426922688349435
+  },
+  "episodes": [
+    [
+      {
+        "seed": 1000,
+        "outcome": "off_road",
+        "progress": 0.8313726213641066,
+        "lap_time": null
+      },
+      {
+        "seed": 1001,
+        "outcome": "off_road",
+        "progress": 0.10954110911699333,
+        "lap_time": null
+      },
+      {
+        "seed": 1002,
+        "outcome": "off_road",
+        "progress": 0.4496653702248108,
+        "lap_time": null
+      },
+      {
+        "seed": 1003,
+        "outcome": "off_road",
+        "progress": 0.314556640833435,
+        "lap_time": null
+      },
+      {
+        "seed": 1004,
+        "outcome": "off_road",
+        "progress": 0.4230590875730976,
+        "lap_time": null
+      },
+      {
+        "seed": 1005,
+        "outcome": "off_road",
+        "progress": 0.4251918711641166,
+        "lap_time": null
+      },
+      {
+        "seed": 1006,
+        "outcome": "off_road",
+        "progress": 0.27971195947700644,
+        "lap_time": null
+      },
+      {
+        "seed": 1007,
+        "outcome": "off_road",
+        "progress": 0.46317695308585183,
+        "lap_time": null
+      },
+      {
+        "seed": 1008,
+        "outcome": "off_road",
+        "progress": 0.30445241607806867,
+        "lap_time": null
+      },
+      {
+        "seed": 1009,
+        "outcome": "off_road",
+        "progress": 0.7216783554433214,
+        "lap_time": null
+      },
+      {
+        "seed": 1010,
+        "outcome": "off_road",
+        "progress": 0.5441111264414505,
+        "lap_time": null
+      },
+      {
+        "seed": 1011,
+        "outcome": "off_road",
+        "progress": 0.1796540729783334,
+        "lap_time": null
+      },
+      {
+        "seed": 1012,
+        "outcome": "off_road",
+        "progress": 0.5729595790121488,
+        "lap_time": null
+      },
+      {
+        "seed": 1013,
+        "outcome": "off_road",
+        "progress": 0.6889167839259314,
+        "lap_time": null
+      },
+      {
+        "seed": 1014,
+        "outcome": "off_road",
+        "progress": 0.2611603942239079,
+        "lap_time": null
+      },
+      {
+        "seed": 1015,
+        "outcome": "off_road",
+        "progress": 0.40210065290293506,
+        "lap_time": null
+      },
+      {
+        "seed": 1016,
+        "outcome": "off_road",
+        "progress": 0.5264889336495221,
+        "lap_time": null
+      },
+      {
+        "seed": 1017,
+        "outcome": "off_road",
+        "progress": 0.18908416048617083,
+        "lap_time": null
+      },
+      {
+        "seed": 1018,
+        "outcome": "off_road",
+        "progress": 0.4869460652696581,
+        "lap_time": null
+      },
+      {
+        "seed": 1019,
+        "outcome": "off_road",
+        "progress": 0.14034471612468602,
+        "lap_time": null
+      },
+      {
+        "seed": 1020,
+        "outcome": "stuck",
+        "progress": 0.9218803642960888,
+        "lap_time": null
+      },
+      {
+        "seed": 1021,
+        "outcome": "off_road",
+        "progress": 0.4176283364373689,
+        "lap_time": null
+      },
+      {
+        "seed": 1022,
+        "outcome": "off_road",
+        "progress": 0.19415249809428575,
+        "lap_time": null
+      },
+      {
+        "seed": 1023,
+        "outcome": "off_road",
+        "progress": 0.8078547361765273,
+        "lap_time": null
+      },
+      {
+        "seed": 1024,
+        "outcome": "off_road",
+        "progress": 0.588682202218127,
+        "lap_time": null
+      },
+      {
+        "seed": 1025,
+        "outcome": "off_road",
+        "progress": 0.3517167302096751,
+        "lap_time": null
+      },
+      {
+        "seed": 1026,
+        "outcome": "off_road",
+        "progress": 0.17649919264384073,
+        "lap_time": null
+      },
+      {
+        "seed": 1027,
+        "outcome": "off_road",
+        "progress": 0.2522807576779829,
+        "lap_time": null
+      },
+      {
+        "seed": 1028,
+        "outcome": "off_road",
+        "progress": 0.4845373825587473,
+        "lap_time": null
+      },
+      {
+        "seed": 1029,
+        "outcome": "off_road",
+        "progress": 0.16900266614938741,
+        "lap_time": null
+      },
+      {
+        "seed": 1030,
+        "outcome": "off_road",
+        "progress": 0.6007170840152042,
+        "lap_time": null
+      },
+      {
+        "seed": 1031,
+        "outcome": "off_road",
+        "progress": 0.24925869752632301,
+        "lap_time": null
+      },
+      {
+        "seed": 1032,
+        "outcome": "off_road",
+        "progress": 0.44519901480743895,
+        "lap_time": null
+      },
+      {
+        "seed": 1033,
+        "outcome": "off_road",
+        "progress": 0.1486331018351401,
+        "lap_time": null
+      },
+      {
+        "seed": 1034,
+        "outcome": "off_road",
+        "progress": 0.3247613566663248,
+        "lap_time": null
+      },
+      {
+        "seed": 1035,
+        "outcome": "off_road",
+        "progress": 0.18374055487432994,
+        "lap_time": null
+      },
+      {
+        "seed": 1036,
+        "outcome": "off_road",
+        "progress": 0.280956993163183,
+        "lap_time": null
+      },
+      {
+        "seed": 1037,
+        "outcome": "off_road",
+        "progress": 0.2872942853993775,
+        "lap_time": null
+      },
+      {
+        "seed": 1038,
+        "outcome": "off_road",
+        "progress": 0.31461934929143115,
+        "lap_time": null
+      },
+      {
+        "seed": 1039,
+        "outcome": "off_road",
+        "progress": 0.47038174500244906,
+        "lap_time": null
+      },
+      {
+        "seed": 1040,
+        "outcome": "off_road",
+        "progress": 0.23718694803823415,
+        "lap_time": null
+      },
+      {
+        "seed": 1041,
+        "outcome": "off_road",
+        "progress": 0.4390015842195406,
+        "lap_time": null
+      },
+      {
+        "seed": 1042,
+        "outcome": "off_road",
+        "progress": 0.15628951216114517,
+        "lap_time": null
+      },
+      {
+        "seed": 1043,
+        "outcome": "off_road",
+        "progress": 0.3497638646056952,
+        "lap_time": null
+      },
+      {
+        "seed": 1044,
+        "outcome": "off_road",
+        "progress": 0.411495191401226,
+        "lap_time": null
+      },
+      {
+        "seed": 1045,
+        "outcome": "stuck",
+        "progress": 0.4987235985783118,
+        "lap_time": null
+      },
+      {
+        "seed": 1046,
+        "outcome": "off_road",
+        "progress": 0.3388240903544998,
+        "lap_time": null
+      },
+      {
+        "seed": 1047,
+        "outcome": "off_road",
+        "progress": 0.20778928068121827,
+        "lap_time": null
+      },
+      {
+        "seed": 1048,
+        "outcome": "off_road",
+        "progress": 0.7817942693984139,
+        "lap_time": null
+      },
+      {
+        "seed": 1049,
+        "outcome": "off_road",
+        "progress": 0.3533982865247851,
+        "lap_time": null
+      }
+    ],
+    [
+      {
+        "seed": 1000,
+        "outcome": "off_road",
+        "progress": 0.1400253409149519,
+        "lap_time": null
+      },
+      {
+        "seed": 1001,
+        "outcome": "off_road",
+        "progress": 0.06668461745485077,
+        "lap_time": null
+      },
+      {
+        "seed": 1002,
+        "outcome": "off_road",
+        "progress": 0.13647909089215537,
+        "lap_time": null
+      },
+      {
+        "seed": 1003,
+        "outcome": "off_road",
+        "progress": 0.12785103724063096,
+        "lap_time": null
+      },
+      {
+        "seed": 1004,
+        "outcome": "off_road",
+        "progress": 0.10140220507798209,
+        "lap_time": null
+      },
+      {
+        "seed": 1005,
+        "outcome": "off_road",
+        "progress": 0.3104167702567655,
+        "lap_time": null
+      },
+      {
+        "seed": 1006,
+        "outcome": "off_road",
+        "progress": 0.1451028141504616,
+        "lap_time": null
+      },
+      {
+        "seed": 1007,
+        "outcome": "off_road",
+        "progress": 0.15563632796287186,
+        "lap_time": null
+      },
+      {
+        "seed": 1008,
+        "outcome": "off_road",
+        "progress": 0.13875082530582572,
+        "lap_time": null
+      },
+      {
+        "seed": 1009,
+        "outcome": "off_road",
+        "progress": 0.4819190137358911,
+        "lap_time": null
+      },
+      {
+        "seed": 1010,
+        "outcome": "off_road",
+        "progress": 0.15946779078559414,
+        "lap_time": null
+      },
+      {
+        "seed": 1011,
+        "outcome": "off_road",
+        "progress": 0.09420061865215745,
+        "lap_time": null
+      },
+      {
+        "seed": 1012,
+        "outcome": "off_road",
+        "progress": 0.19052654988897366,
+        "lap_time": null
+      },
+      {
+        "seed": 1013,
+        "outcome": "off_road",
+        "progress": 0.14171683545850777,
+        "lap_time": null
+      },
+      {
+        "seed": 1014,
+        "outcome": "off_road",
+        "progress": 0.18898321703461696,
+        "lap_time": null
+      },
+      {
+        "seed": 1015,
+        "outcome": "off_road",
+        "progress": 0.3292561276559759,
+        "lap_time": null
+      },
+      {
+        "seed": 1016,
+        "outcome": "off_road",
+        "progress": 0.14824856409953802,
+        "lap_time": null
+      },
+      {
+        "seed": 1017,
+        "outcome": "off_road",
+        "progress": 0.1858677189544165,
+        "lap_time": null
+      },
+      {
+        "seed": 1018,
+        "outcome": "off_road",
+        "progress": 0.12110927036686164,
+        "lap_time": null
+      },
+      {
+        "seed": 1019,
+        "outcome": "off_road",
+        "progress": 0.042916944503635646,
+        "lap_time": null
+      },
+      {
+        "seed": 1020,
+        "outcome": "off_road",
+        "progress": 0.12478066690875811,
+        "lap_time": null
+      },
+      {
+        "seed": 1021,
+        "outcome": "off_road",
+        "progress": 0.11119155399472969,
+        "lap_time": null
+      },
+      {
+        "seed": 1022,
+        "outcome": "off_road",
+        "progress": 0.14494613108295884,
+        "lap_time": null
+      },
+      {
+        "seed": 1023,
+        "outcome": "off_road",
+        "progress": 0.24006521715819662,
+        "lap_time": null
+      },
+      {
+        "seed": 1024,
+        "outcome": "off_road",
+        "progress": 0.15326974660881199,
+        "lap_time": null
+      },
+      {
+        "seed": 1025,
+        "outcome": "off_road",
+        "progress": 0.13258263054521857,
+        "lap_time": null
+      },
+      {
+        "seed": 1026,
+        "outcome": "off_road",
+        "progress": 0.13575180390599023,
+        "lap_time": null
+      },
+      {
+        "seed": 1027,
+        "outcome": "off_road",
+        "progress": 0.13808966470474515,
+        "lap_time": null
+      },
+      {
+        "seed": 1028,
+        "outcome": "off_road",
+        "progress": 0.0945388865311827,
+        "lap_time": null
+      },
+      {
+        "seed": 1029,
+        "outcome": "off_road",
+        "progress": 0.08469827456029261,
+        "lap_time": null
+      },
+      {
+        "seed": 1030,
+        "outcome": "off_road",
+        "progress": 0.20171952217742023,
+        "lap_time": null
+      },
+      {
+        "seed": 1031,
+        "outcome": "off_road",
+        "progress": 0.11909634048335088,
+        "lap_time": null
+      },
+      {
+        "seed": 1032,
+        "outcome": "off_road",
+        "progress": 0.18573803691229407,
+        "lap_time": null
+      },
+      {
+        "seed": 1033,
+        "outcome": "off_road",
+        "progress": 0.08141906147992295,
+        "lap_time": null
+      },
+      {
+        "seed": 1034,
+        "outcome": "off_road",
+        "progress": 0.07826154263911544,
+        "lap_time": null
+      },
+      {
+        "seed": 1035,
+        "outcome": "off_road",
+        "progress": 0.08432704845608036,
+        "lap_time": null
+      },
+      {
+        "seed": 1036,
+        "outcome": "off_road",
+        "progress": 0.15544189947034603,
+        "lap_time": null
+      },
+      {
+        "seed": 1037,
+        "outcome": "off_road",
+        "progress": 0.23038827012775975,
+        "lap_time": null
+      },
+      {
+        "seed": 1038,
+        "outcome": "off_road",
+        "progress": 0.09943010148477627,
+        "lap_time": null
+      },
+      {
+        "seed": 1039,
+        "outcome": "off_road",
+        "progress": 0.11789381183937742,
+        "lap_time": null
+      },
+      {
+        "seed": 1040,
+        "outcome": "off_road",
+        "progress": 0.2186011484340069,
+        "lap_time": null
+      },
+      {
+        "seed": 1041,
+        "outcome": "off_road",
+        "progress": 0.120182119132274,
+        "lap_time": null
+      },
+      {
+        "seed": 1042,
+        "outcome": "off_road",
+        "progress": 0.118632570998976,
+        "lap_time": null
+      },
+      {
+        "seed": 1043,
+        "outcome": "off_road",
+        "progress": 0.24616559273536132,
+        "lap_time": null
+      },
+      {
+        "seed": 1044,
+        "outcome": "off_road",
+        "progress": 0.2973639122858894,
+        "lap_time": null
+      },
+      {
+        "seed": 1045,
+        "outcome": "off_road",
+        "progress": 0.13202872010848843,
+        "lap_time": null
+      },
+      {
+        "seed": 1046,
+        "outcome": "off_road",
+        "progress": 0.20075561002190412,
+        "lap_time": null
+      },
+      {
+        "seed": 1047,
+        "outcome": "off_road",
+        "progress": 0.11765767820199291,
+        "lap_time": null
+      },
+      {
+        "seed": 1048,
+        "outcome": "off_road",
+        "progress": 0.16483620753212935,
+        "lap_time": null
+      },
+      {
+        "seed": 1049,
+        "outcome": "off_road",
+        "progress": 0.26593158526198213,
+        "lap_time": null
+      }
+    ],
+    [
+      {
+        "seed": 1000,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 35.75
+      },
+      {
+        "seed": 1001,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 34.85
+      },
+      {
+        "seed": 1002,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 32.7
+      },
+      {
+        "seed": 1003,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 39.0
+      },
+      {
+        "seed": 1004,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 31.150000000000002
+      },
+      {
+        "seed": 1005,
+        "outcome": "off_road",
+        "progress": 0.40211399225634925,
+        "lap_time": null
+      },
+      {
+        "seed": 1006,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 39.800000000000004
+      },
+      {
+        "seed": 1007,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 35.9
+      },
+      {
+        "seed": 1008,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 32.0
+      },
+      {
+        "seed": 1009,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 29.35
+      },
+      {
+        "seed": 1010,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 33.6
+      },
+      {
+        "seed": 1011,
+        "outcome": "off_road",
+        "progress": 0.6076519997100137,
+        "lap_time": null
+      },
+      {
+        "seed": 1012,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 30.650000000000002
+      },
+      {
+        "seed": 1013,
+        "outcome": "off_road",
+        "progress": 0.8205413499428782,
+        "lap_time": null
+      },
+      {
+        "seed": 1014,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 34.5
+      },
+      {
+        "seed": 1015,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 33.35
+      },
+      {
+        "seed": 1016,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 32.800000000000004
+      },
+      {
+        "seed": 1017,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 30.85
+      },
+      {
+        "seed": 1018,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 31.8
+      },
+      {
+        "seed": 1019,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 39.85
+      },
+      {
+        "seed": 1020,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 36.65
+      },
+      {
+        "seed": 1021,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 36.550000000000004
+      },
+      {
+        "seed": 1022,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 41.25
+      },
+      {
+        "seed": 1023,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 36.7
+      },
+      {
+        "seed": 1024,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 36.95
+      },
+      {
+        "seed": 1025,
+        "outcome": "off_road",
+        "progress": 0.5338914844820829,
+        "lap_time": null
+      },
+      {
+        "seed": 1026,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 31.35
+      },
+      {
+        "seed": 1027,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 32.2
+      },
+      {
+        "seed": 1028,
+        "outcome": "stuck",
+        "progress": 0.0,
+        "lap_time": null
+      },
+      {
+        "seed": 1029,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 38.800000000000004
+      },
+      {
+        "seed": 1030,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 32.800000000000004
+      },
+      {
+        "seed": 1031,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 38.050000000000004
+      },
+      {
+        "seed": 1032,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 43.6
+      },
+      {
+        "seed": 1033,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 34.800000000000004
+      },
+      {
+        "seed": 1034,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 44.550000000000004
+      },
+      {
+        "seed": 1035,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 36.6
+      },
+      {
+        "seed": 1036,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 31.3
+      },
+      {
+        "seed": 1037,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 35.300000000000004
+      },
+      {
+        "seed": 1038,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 34.5
+      },
+      {
+        "seed": 1039,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 34.050000000000004
+      },
+      {
+        "seed": 1040,
+        "outcome": "off_road",
+        "progress": 0.8854134371397298,
+        "lap_time": null
+      },
+      {
+        "seed": 1041,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 33.35
+      },
+      {
+        "seed": 1042,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 33.1
+      },
+      {
+        "seed": 1043,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 34.9
+      },
+      {
+        "seed": 1044,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 34.95
+      },
+      {
+        "seed": 1045,
+        "outcome": "stuck",
+        "progress": 0.4832711417012888,
+        "lap_time": null
+      },
+      {
+        "seed": 1046,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 32.7
+      },
+      {
+        "seed": 1047,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 30.05
+      },
+      {
+        "seed": 1048,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 31.05
+      },
+      {
+        "seed": 1049,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 35.95
+      }
+    ]
+  ]
+}
