@@ -87,7 +87,7 @@ A policy is any callable that maps an observation to an action. A baseline is a 
 `evaluate(policy, seeds, difficulty) -> dict` runs one episode per seed with deterministic actions. The dict has lap success rate, off-track rate, stuck rate, mean lap time of successful laps, mean speed and mean progress. The same function evaluates PPO, random and pure pursuit. An optional `env` argument passes the env a policy reads from, like pure pursuit. Track seeds must come from the validation or test split, training track seeds raise an error. `run_episode(policy, seed, env)` runs one episode and also returns the outcome and the car path, for the failure plots. The result also has `episodes`, one entry per track with track seed, outcome, progress and lap time, and `eval.json` stores them as one list per model. `evaluation/stats.py` reads them for paired tests and confidence intervals.
 
 ### Config and runs
-One YAML file per experiment in `configs/`. The training script copies the resolved config to `runs/<name>/` and writes checkpoints and logs there. Run names are `<config>_s<seed>`, where `<seed>` is the training seed. Only models chosen on purpose are committed, as small files outside `runs/`.
+One YAML file per experiment in `configs/`. The training script copies the resolved config to `runs/<name>/` and writes checkpoints and logs there. Run names are `<config>_s<seed>`, where `<seed>` is the training seed. The light files of every run are committed so the whole team shares them, `config.yaml`, `progress.csv`, `val_curve.csv`, `eval.json`, `best_model.zip` and `runs/figures/`. The `.gitignore` whitelist keeps checkpoints, `model.zip` and tensorboard logs local.
 
 ## Technical decisions (decided)
 | Topic | Decision |
@@ -114,7 +114,7 @@ Ruff for lint and format through `make lint` and `make format`. No other rules. 
 - One branch per task, named `<student>/<task>`, for example `s1/track-gen`.
 - Small PRs into `main`, one teammate reviews, `make test` and `make lint` pass.
 - `main` always runs.
-- Never commit `runs/`, `videos/`, `*.pkl` or large files.
+- Commit only the light run files listed in Config and runs. Never commit `videos/`, `*.pkl` or other large files.
 - Claim a task in docs/PLAN.md with your initials before you start it.
 
 ## Open questions

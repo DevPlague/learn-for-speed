@@ -11,6 +11,7 @@ import math
 import random
 import re
 import shutil
+import time
 from pathlib import Path
 
 import yaml
@@ -59,11 +60,14 @@ CONFIG_LABELS = {
 
 
 def run_label(name):
-    """Readable name of a run, `Final · semilla 2` for final_s2."""
+    """Readable name of a run, `Final · Training Session C` for final_s2.
+
+    Training seeds 0, 1, 2 become the letters A, B, C, one per training session.
+    """
     match = re.match(r"^(.*)_s(\d+)$", name)
     config, seed = (match.group(1), match.group(2)) if match else (name, None)
     label = CONFIG_LABELS.get(config, config)
-    return f"{label} · semilla {seed}" if seed is not None else label
+    return f"{label} · Training Session {chr(65 + int(seed))}" if seed is not None else label
 
 
 def require_runs(runs_dir, names):
@@ -245,7 +249,17 @@ def build(runs_dir, names, difficulties, n_eval, n_replay, out, n_race=6):
     shutil.copytree(Path(__file__).parent / "static", out)
     payload = "window.DATA = " + json.dumps(data, separators=(",", ":"))
     (out / "data.js").write_text(payload, encoding="utf-8")
+    stamp_assets(out / "index.html")
     return out / "index.html"
+
+
+def stamp_assets(index):
+    """Adds a build stamp to the page's own files, so a browser cache never mixes two builds."""
+    stamp = str(int(time.time()))
+    html = index.read_text(encoding="utf-8")
+    for name in ("style.css", "data.js", "app.js"):
+        html = html.replace(f'"{name}"', f'"{name}?v={stamp}"')
+    index.write_text(html, encoding="utf-8")
 
 
 def main():

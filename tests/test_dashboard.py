@@ -3,7 +3,7 @@ import json
 import numpy as np
 import pytest
 
-from dashboard.build import build, level_stats, race_tracks, require_runs, run_label
+from dashboard.build import build, level_stats, race_tracks, require_runs, run_label, stamp_assets
 from dashboard.record import record_episode
 from evaluation.baselines import PurePursuitPolicy
 from evaluation.evaluate import make_policy, run_episode
@@ -82,5 +82,15 @@ def test_require_runs_names_runs_without_a_model_and_labels_are_readable(tmp_pat
     (tmp_path / "final_s0").mkdir()
     (tmp_path / "final_s0" / "best_model.zip").write_bytes(b"")
     assert require_runs(tmp_path, ["final_s0", "final_s1"]) == ["final_s1"]
-    assert run_label("final_s2") == "Final · semilla 2"
+    assert run_label("final_s2") == "Final · Training Session C"
     assert run_label("unknown_cfg") == "unknown_cfg"
+
+
+def test_stamp_assets_versions_the_page_files(tmp_path):
+    index = tmp_path / "index.html"
+    index.write_text(
+        '<link href="style.css"><script src="data.js"></script><script src="app.js"></script>'
+    )
+    stamp_assets(index)
+    html = index.read_text()
+    assert all(f'"{name}?v=' in html for name in ("style.css", "data.js", "app.js"))
