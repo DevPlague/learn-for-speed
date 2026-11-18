@@ -1,0 +1,23 @@
+{
+  "args": {
+    "policy": "random",
+    "model": [],
+    "split": "val",
+    "n": 2,
+    "difficulty": 0.5,
+    "out": null
+  },
+  "seeds": [
+    1000,
+    1001
+  ],
+  "metrics": {
+    "n_episodes": 2,
+    "lap_success_rate": 0.0,
+    "off_track_rate": 0.0,
+    "stuck_rate": 1.0,
+    "mean_lap_time": null,
+    "mean_speed": 0.5103035589508284,
+    "mean_progress": 0.0029791869214456923
+  }
+}
