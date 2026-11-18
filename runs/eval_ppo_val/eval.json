@@ -1,0 +1,35 @@
+{
+  "args": {
+    "policy": "ppo",
+    "model": [
+      "runs/tiny_s0/model.zip"
+    ],
+    "split": "val",
+    "n": 5,
+    "difficulty": 0.5,
+    "out": null
+  },
+  "seeds": [
+    1000,
+    1001,
+    1002,
+    1003,
+    1004
+  ],
+  "metrics": {
+    "n_episodes": 5,
+    "n_models": 1,
+    "lap_success_rate": 0.0,
+    "lap_success_rate_std": 0.0,
+    "off_track_rate": 0.0,
+    "off_track_rate_std": 0.0,
+    "stuck_rate": 1.0,
+    "stuck_rate_std": 0.0,
+    "mean_lap_time": null,
+    "mean_lap_time_std": null,
+    "mean_speed": 0.4019235902794172,
+    "mean_speed_std": 0.0,
+    "mean_progress": 0.0017787801267228898,
+    "mean_progress_std": 0.0
+  }
+}

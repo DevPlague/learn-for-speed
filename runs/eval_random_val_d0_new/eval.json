@@ -1,0 +1,375 @@
+{
+  "args": {
+    "policy": "random",
+    "model": [],
+    "split": "val",
+    "n": 50,
+    "difficulty": 0.0,
+    "out": "runs/eval_random_val_d0_new"
+  },
+  "seeds": [
+    1000,
+    1001,
+    1002,
+    1003,
+    1004,
+    1005,
+    1006,
+    1007,
+    1008,
+    1009,
+    1010,
+    1011,
+    1012,
+    1013,
+    1014,
+    1015,
+    1016,
+    1017,
+    1018,
+    1019,
+    1020,
+    1021,
+    1022,
+    1023,
+    1024,
+    1025,
+    1026,
+    1027,
+    1028,
+    1029,
+    1030,
+    1031,
+    1032,
+    1033,
+    1034,
+    1035,
+    1036,
+    1037,
+    1038,
+    1039,
+    1040,
+    1041,
+    1042,
+    1043,
+    1044,
+    1045,
+    1046,
+    1047,
+    1048,
+    1049
+  ],
+  "metrics": {
+    "n_episodes": 50,
+    "lap_success_rate": 0.0,
+    "off_track_rate": 0.0,
+    "stuck_rate": 1.0,
+    "mean_lap_time": null,
+    "mean_speed": 0.43073164911683237,
+    "mean_progress": 0.002921363978143976
+  },
+  "episodes": [
+    [
+      {
+        "seed": 1000,
+        "outcome": "stuck",
+        "progress": 0.006311217194681196,
+        "lap_time": null
+      },
+      {
+        "seed": 1001,
+        "outcome": "stuck",
+        "progress": 0.0,
+        "lap_time": null
+      },
+      {
+        "seed": 1002,
+        "outcome": "stuck",
+        "progress": 0.0,
+        "lap_time": null
+      },
+      {
+        "seed": 1003,
+        "outcome": "stuck",
+        "progress": 0.0003073739963099231,
+        "lap_time": null
+      },
+      {
+        "seed": 1004,
+        "outcome": "stuck",
+        "progress": 0.0,
+        "lap_time": null
+      },
+      {
+        "seed": 1005,
+        "outcome": "stuck",
+        "progress": 0.0003769909848787001,
+        "lap_time": null
+      },
+      {
+        "seed": 1006,
+        "outcome": "stuck",
+        "progress": 0.00274684579070561,
+        "lap_time": null
+      },
+      {
+        "seed": 1007,
+        "outcome": "stuck",
+        "progress": 0.0039042883298427977,
+        "lap_time": null
+      },
+      {
+        "seed": 1008,
+        "outcome": "stuck",
+        "progress": 0.0,
+        "lap_time": null
+      },
+      {
+        "seed": 1009,
+        "outcome": "stuck",
+        "progress": 0.0014031076994951985,
+        "lap_time": null
+      },
+      {
+        "seed": 1010,
+        "outcome": "stuck",
+        "progress": 0.000192805162656573,
+        "lap_time": null
+      },
+      {
+        "seed": 1011,
+        "outcome": "stuck",
+        "progress": 0.008294885568689458,
+        "lap_time": null
+      },
+      {
+        "seed": 1012,
+        "outcome": "stuck",
+        "progress": 0.0,
+        "lap_time": null
+      },
+      {
+        "seed": 1013,
+        "outcome": "stuck",
+        "progress": 0.0,
+        "lap_time": null
+      },
+      {
+        "seed": 1014,
+        "outcome": "stuck",
+        "progress": 0.002023197596639492,
+        "lap_time": null
+      },
+      {
+        "seed": 1015,
+        "outcome": "stuck",
+        "progress": 0.0,
+        "lap_time": null
+      },
+      {
+        "seed": 1016,
+        "outcome": "stuck",
+        "progress": 0.0,
+        "lap_time": null
+      },
+      {
+        "seed": 1017,
+        "outcome": "stuck",
+        "progress": 0.0,
+        "lap_time": null
+      },
+      {
+        "seed": 1018,
+        "outcome": "stuck",
+        "progress": 0.0023695198713725163,
+        "lap_time": null
+      },
+      {
+        "seed": 1019,
+        "outcome": "stuck",
+        "progress": 0.005801671274020259,
+        "lap_time": null
+      },
+      {
+        "seed": 1020,
+        "outcome": "stuck",
+        "progress": 0.0,
+        "lap_time": null
+      },
+      {
+        "seed": 1021,
+        "outcome": "stuck",
+        "progress": 0.0,
+        "lap_time": null
+      },
+      {
+        "seed": 1022,
+        "outcome": "stuck",
+        "progress": 0.0025316983478412824,
+        "lap_time": null
+      },
+      {
+        "seed": 1023,
+        "outcome": "stuck",
+        "progress": 0.0,
+        "lap_time": null
+      },
+      {
+        "seed": 1024,
+        "outcome": "stuck",
+        "progress": 0.009769695941315215,
+        "lap_time": null
+      },
+      {
+        "seed": 1025,
+        "outcome": "stuck",
+        "progress": 0.00792046267704899,
+        "lap_time": null
+      },
+      {
+        "seed": 1026,
+        "outcome": "stuck",
+        "progress": 0.0040565811272454955,
+        "lap_time": null
+      },
+      {
+        "seed": 1027,
+        "outcome": "stuck",
+        "progress": 0.0,
+        "lap_time": null
+      },
+      {
+        "seed": 1028,
+        "outcome": "stuck",
+        "progress": 0.0130350277324916,
+        "lap_time": null
+      },
+      {
+        "seed": 1029,
+        "outcome": "stuck",
+        "progress": 0.008210620469527752,
+        "lap_time": null
+      },
+      {
+        "seed": 1030,
+        "outcome": "stuck",
+        "progress": 0.0033816719394032524,
+        "lap_time": null
+      },
+      {
+        "seed": 1031,
+        "outcome": "stuck",
+        "progress": 0.0,
+        "lap_time": null
+      },
+      {
+        "seed": 1032,
+        "outcome": "stuck",
+        "progress": 0.0,
+        "lap_time": null
+      },
+      {
+        "seed": 1033,
+        "outcome": "stuck",
+        "progress": 0.013625812207842425,
+        "lap_time": null
+      },
+      {
+        "seed": 1034,
+        "outcome": "stuck",
+        "progress": 0.0,
+        "lap_time": null
+      },
+      {
+        "seed": 1035,
+        "outcome": "stuck",
+        "progress": 0.0010486039587864204,
+        "lap_time": null
+      },
+      {
+        "seed": 1036,
+        "outcome": "stuck",
+        "progress": 0.0,
+        "lap_time": null
+      },
+      {
+        "seed": 1037,
+        "outcome": "stuck",
+        "progress": 0.0,
+        "lap_time": null
+      },
+      {
+        "seed": 1038,
+        "outcome": "stuck",
+        "progress": 0.0167777002268234,
+        "lap_time": null
+      },
+      {
+        "seed": 1039,
+        "outcome": "stuck",
+        "progress": 0.02296096493282529,
+        "lap_time": null
+      },
+      {
+        "seed": 1040,
+        "outcome": "stuck",
+        "progress": 4.798504870012765e-05,
+        "lap_time": null
+      },
+      {
+        "seed": 1041,
+        "outcome": "stuck",
+        "progress": 0.0012645296907109471,
+        "lap_time": null
+      },
+      {
+        "seed": 1042,
+        "outcome": "stuck",
+        "progress": 0.0,
+        "lap_time": null
+      },
+      {
+        "seed": 1043,
+        "outcome": "stuck",
+        "progress": 0.0,
+        "lap_time": null
+      },
+      {
+        "seed": 1044,
+        "outcome": "stuck",
+        "progress": 0.0,
+        "lap_time": null
+      },
+      {
+        "seed": 1045,
+        "outcome": "stuck",
+        "progress": 0.0,
+        "lap_time": null
+      },
+      {
+        "seed": 1046,
+        "outcome": "stuck",
+        "progress": 0.0,
+        "lap_time": null
+      },
+      {
+        "seed": 1047,
+        "outcome": "stuck",
+        "progress": 0.0,
+        "lap_time": null
+      },
+      {
+        "seed": 1048,
+        "outcome": "stuck",
+        "progress": 0.0,
+        "lap_time": null
+      },
+      {
+        "seed": 1049,
+        "outcome": "stuck",
+        "progress": 0.007704941137344878,
+        "lap_time": null
+      }
+    ]
+  ]
+}

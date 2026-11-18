@@ -4,57 +4,45 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Learn for Speed</title>
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' shape-rendering='crispEdges'%3E%3Crect x='4' y='2' width='2' height='28' fill='%232d2a2e'/%3E%3Cg fill='%232d2a2e'%3E%3Crect x='6' y='4' width='24' height='18' fill='%23efe6d2'/%3E%3Crect x='6' y='4' width='6' height='6'/%3E%3Crect x='18' y='4' width='6' height='6'/%3E%3Crect x='12' y='10' width='6' height='6'/%3E%3Crect x='24' y='10' width='6' height='6'/%3E%3Crect x='6' y='16' width='6' height='6'/%3E%3Crect x='18' y='16' width='6' height='6'/%3E%3C/g%3E%3Crect x='6' y='4' width='24' height='18' fill='none' stroke='%23d9483f' stroke-width='1.5'/%3E%3C/svg%3E">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' shape-rendering='crispEdges'%3E%3Crect x='4' y='2' width='2' height='28' fill='%232d2a2e'/%3E%3Cg fill='%232d2a2e'%3E%3Crect x='6' y='4' width='24' height='18' fill='%23efe6d2'/%3E%3Crect x='6' y='4' width='6' height='6'/%3E%3Crect x='18' y='4' width='6' height='6'/%3E%3Crect x='12' y='10' width='6' height='6'/%3E%3Crect x='24' y='10' width='6' height='6'/%3E%3Crect x='6' y='16' width='6' height='6'/%3E%3Crect x='18' y='16' width='6' height='6'/%3E%3C/g%3E%3Crect x='6' y='4' width='24' height='18' fill='none' stroke='%232f6fd6' stroke-width='1.5'/%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Oxygen:wght@400;700&family=Press+Start+2P&display=swap">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="tv">
-    <div class="screen-wrap">
-      <div class="screen" id="screen">
-        <header class="topbar">
-          <div class="bar">
-            <div class="wordmark"><canvas class="flag" id="flag" width="13" height="9" aria-hidden="true"></canvas><span>Learn for Speed</span></div>
-            <div class="theme" id="theme" role="group" aria-label="Tema">
-              <button data-theme-set="light" title="Claro" aria-label="Tema claro"><span data-icon="sun"></span></button>
-              <button data-theme-set="dark" title="Oscuro" aria-label="Tema oscuro"><span data-icon="moon"></span></button>
-              <button data-theme-set="system" title="Sistema" aria-label="Tema del sistema"><span data-icon="monitor"></span></button>
-            </div>
-            <button class="menu-btn" id="menu-btn" aria-expanded="false" aria-controls="menu-panel"><span class="burger"><i></i><i></i><i></i></span>Menú</button>
-          </div>
-          <div class="trackline">
-            <div class="road"></div>
-            <div class="stops" id="stops"></div>
-            <canvas class="kart" id="kart" width="24" height="12" aria-hidden="true"></canvas>
-          </div>
-        </header>
+  <div class="arcade-page">
+    <button class="side-arrow left" id="nav-prev" aria-label="Sección anterior" title="Sección anterior ([)"></button>
+    <div class="cabinet-page">
+      <header class="marquee-top">
+        <span class="grill" aria-hidden="true"></span>
+        <div class="marquee-title"><canvas class="flag" id="flag" width="13" height="9" aria-hidden="true"></canvas><span>Learn for Speed</span></div>
+        <span class="grill" aria-hidden="true"></span>
+      </header>
+      <div class="bezel">
+        <div class="screen-wrap">
+          <div class="screen" id="screen">
+            <header class="topbar">
+              <div class="trackline">
+                <div class="track">
+                  <div class="road"></div>
+                  <div class="stops" id="stops"></div>
+                  <canvas class="kart" id="kart" width="24" height="12" aria-hidden="true"></canvas>
+                </div>
+              </div>
+            </header>
 
         <main id="main">
           <section class="view" data-view="overview">
             <div class="hero">
               <div class="hero-art"><canvas id="hero-car" width="692" height="381" aria-label="Coche en marcha"></canvas></div>
               <div class="hero-text">
-                <h1>Un coche que aprendió a correr <em>por sí mismo</em></h1>
+                <h1>Learn <em>For</em> Speed</h1>
                 <p>Un coche entrenado con PPO recorre circuitos generados al azar que nunca ha visto. Solo sabe lo que le cuentan sus sensores, y aun así compite con un piloto programado a mano que sí ve el mapa.</p>
-                <div class="row gap wrap">
-                  <button class="btn solid" data-goto="race"><span data-icon="flag"></span>Corre contra el modelo</button>
-                  <button class="btn" data-goto="simulation"><span data-icon="play"></span>Ver repeticiones</button>
-                </div>
               </div>
             </div>
             <div class="cluster" id="cluster"></div>
-            <div class="overview-grid">
-              <div>
-                <h3>Repeticiones del modelo final</h3>
-                <div class="grid-3" id="board"></div>
-              </div>
-              <div>
-                <h3>Pilotos</h3>
-                <div class="card list" id="policies"></div>
-              </div>
-            </div>
+            <div class="counters" id="counters"></div>
           </section>
 
           <section class="view" data-view="race" hidden>
@@ -65,8 +53,7 @@
               </div>
               <label class="toggle"><input type="checkbox" id="race-assist" checked> Asistencia de dirección</label>
             </div>
-            <div class="cabinet">
-              <div class="marquee">Learn for Speed · Arcade</div>
+            <div class="game">
               <div class="arcade-screen">
                 <canvas id="race-canvas" tabindex="0" aria-label="Pista de carrera"></canvas>
                 <div class="hud8" id="race-hud" hidden></div>
@@ -80,7 +67,6 @@
                   <span class="k"><span>ESC</span></span><span>niveles</span>
                 </div>
               </div>
-              <div class="control-panel" aria-hidden="true"><span class="stick"></span><span class="pbuttons"><i></i><i></i></span></div>
             </div>
             <div class="pad" id="race-pad">
               <button data-key="left">Izq</button><button data-key="right">Der</button>
@@ -91,7 +77,7 @@
           <section class="view" data-view="training" hidden>
             <div class="head">
               <h2>Curvas de <em>entrenamiento</em></h2>
-              <p class="muted">Cada línea es la media de las semillas de entrenamiento de una versión del modelo, y la banda muestra cuánto se separan entre sí.</p>
+              <p class="muted">Cada línea es la media de las Training Sessions de una versión del modelo, y la banda muestra cuánto se separan entre sí.</p>
             </div>
             <div class="row wrap">
               <label class="search"><span data-icon="search"></span><input id="search" placeholder="Buscar runs"><kbd>/</kbd></label>
@@ -128,13 +114,13 @@
           </section>
 
           <section class="view" data-view="simulation" hidden>
-            <div class="row between wrap">
-              <h2>Repeticiones</h2>
-              <div class="tabs" id="sim-mode"></div>
-            </div>
             <div class="with-wheel">
               <div class="wheel" id="sim-wheel"></div>
               <div class="stack">
+                <div class="row between wrap">
+                  <h2>Repeticiones</h2>
+                  <div class="tabs" id="sim-mode"></div>
+                </div>
                 <div class="card controls">
                   <button class="btn dark" id="play"><span data-icon="play"></span>Reproducir</button>
                   <div class="seg" id="speed"></div>
@@ -150,29 +136,51 @@
           </section>
 
           <section class="view" data-view="physics" hidden>
-            <div class="row between wrap">
-              <h2>Física y <em>conducta</em></h2>
-              <div class="tabs" id="phys-mode"></div>
-            </div>
             <div class="with-wheel">
               <div class="wheel" id="phys-wheel"></div>
-              <div class="grid-main">
-                <div class="col"><div class="grid-2" id="phys-charts"></div></div>
-                <div class="col">
+              <div class="stack">
+                <div class="row between wrap">
+                  <h2>Física y <em>conducta</em></h2>
+                  <div class="tabs" id="phys-mode"></div>
+                </div>
+                <div class="grid-2" id="phys-charts"></div>
+                <div class="grid-map">
                   <div class="card"><canvas id="phys-map" height="300"></canvas><div class="legend" id="phys-legend"></div></div>
-                  <h3>Fallos de PPO</h3>
-                  <div class="card list" id="failures"></div>
+                  <div>
+                    <h3>Fallos de PPO</h3>
+                    <div class="card list" id="failures"></div>
+                  </div>
                 </div>
               </div>
             </div>
           </section>
         </main>
+          </div>
+          <div class="osd" id="osd" aria-hidden="true"></div>
+          <div class="smear" aria-hidden="true"></div>
+          <div class="glass" aria-hidden="true"></div>
+        </div>
       </div>
-      <canvas id="static" hidden></canvas>
-      <div class="osd" id="osd" aria-hidden="true"></div>
-      <nav class="menu-panel" id="menu-panel" aria-label="Secciones" inert></nav>
-      <div class="glass" aria-hidden="true"></div>
+      <footer class="deck">
+        <div class="deck-group">
+          <div class="joystick" id="joystick" role="group" aria-label="Cambiar de sección">
+            <canvas id="stick" width="22" height="26" aria-hidden="true"></canvas>
+            <button data-d="-1" aria-label="Sección anterior" title="Sección anterior"></button>
+            <button data-d="1" aria-label="Sección siguiente" title="Sección siguiente"></button>
+          </div>
+          <span class="deck-label">sección</span>
+        </div>
+        <div class="deck-group">
+          <div class="arcade-btns" id="theme" role="group" aria-label="Tema">
+            <button class="ab sun" data-theme-set="light" title="Claro" aria-label="Tema claro"><span data-icon="sun"></span></button>
+            <button class="ab moon" data-theme-set="dark" title="Oscuro" aria-label="Tema oscuro"><span data-icon="moon"></span></button>
+            <button class="ab sys" data-theme-set="system" title="Sistema" aria-label="Tema del sistema"><span data-icon="monitor"></span></button>
+          </div>
+          <span class="deck-label">tema</span>
+        </div>
+      </footer>
     </div>
+    <button class="side-arrow right" id="nav-next" aria-label="Sección siguiente" title="Sección siguiente (])"></button>
   </div>
 
   <script src="vendor/chart.umd.min.js"></script>

@@ -24,7 +24,7 @@
 - Seed everything. One config file per experiment; save it next to the run outputs (runs/<name>/).
 - Track seeds: random training >= 100000, validation 1000-1999, test 10000+. Never tune on test; report test only.
 - Always write track seed (which track) or training seed (PPO run seed 0, 1, 2, the `_s0` in run names), never a bare seed.
-- Never commit runs/, videos/, *.pkl or large files. Commit only deliberate final models and small result tables/figures.
+- Commit only the light run files (config.yaml, progress.csv, val_curve.csv, eval.json, best_model.zip and runs/figures), .gitignore keeps the rest of runs/ out. Never commit videos/, *.pkl or other large files.
 - Ask before launching any training > 10 min. Check changes with a tiny run first.
 - Do not read raw logs, tensorboard files or uv.lock. Read short printed summaries only.
 - Changing obs/action/reward: update docs/SPEC.md and keep tests passing.

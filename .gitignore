@@ -5,8 +5,21 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 
-# Training outputs (Docker bind-mounts the repo, so they are saved locally). Do not commit.
-runs/
+# Training outputs (Docker bind-mounts the repo, so they are saved locally).
+# Only the light files of each run are shared, configs, curves, eval results, figures and the best
+# model. Checkpoints, the last model, tensorboard logs and the built dashboard stay local.
+runs/*
+!runs/*/
+runs/dashboard/
+runs/tiny_*/
+runs/eval_tmp/
+runs/*/*
+!runs/*/config.yaml
+!runs/*/progress.csv
+!runs/*/val_curve.csv
+!runs/*/eval.json
+!runs/*/best_model.zip
+!runs/figures/**
 videos/
 *.log
 

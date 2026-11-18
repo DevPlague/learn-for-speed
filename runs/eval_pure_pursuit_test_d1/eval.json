@@ -1,0 +1,1425 @@
+{
+  "args": {
+    "policy": "pure_pursuit",
+    "model": [],
+    "split": "test",
+    "n": 200,
+    "difficulty": 1.0,
+    "out": "runs/eval_pure_pursuit_test_d1"
+  },
+  "seeds": [
+    10000,
+    10001,
+    10002,
+    10003,
+    10004,
+    10005,
+    10006,
+    10007,
+    10008,
+    10009,
+    10010,
+    10011,
+    10012,
+    10013,
+    10014,
+    10015,
+    10016,
+    10017,
+    10018,
+    10019,
+    10020,
+    10021,
+    10022,
+    10023,
+    10024,
+    10025,
+    10026,
+    10027,
+    10028,
+    10029,
+    10030,
+    10031,
+    10032,
+    10033,
+    10034,
+    10035,
+    10036,
+    10037,
+    10038,
+    10039,
+    10040,
+    10041,
+    10042,
+    10043,
+    10044,
+    10045,
+    10046,
+    10047,
+    10048,
+    10049,
+    10050,
+    10051,
+    10052,
+    10053,
+    10054,
+    10055,
+    10056,
+    10057,
+    10058,
+    10059,
+    10060,
+    10061,
+    10062,
+    10063,
+    10064,
+    10065,
+    10066,
+    10067,
+    10068,
+    10069,
+    10070,
+    10071,
+    10072,
+    10073,
+    10074,
+    10075,
+    10076,
+    10077,
+    10078,
+    10079,
+    10080,
+    10081,
+    10082,
+    10083,
+    10084,
+    10085,
+    10086,
+    10087,
+    10088,
+    10089,
+    10090,
+    10091,
+    10092,
+    10093,
+    10094,
+    10095,
+    10096,
+    10097,
+    10098,
+    10099,
+    10100,
+    10101,
+    10102,
+    10103,
+    10104,
+    10105,
+    10106,
+    10107,
+    10108,
+    10109,
+    10110,
+    10111,
+    10112,
+    10113,
+    10114,
+    10115,
+    10116,
+    10117,
+    10118,
+    10119,
+    10120,
+    10121,
+    10122,
+    10123,
+    10124,
+    10125,
+    10126,
+    10127,
+    10128,
+    10129,
+    10130,
+    10131,
+    10132,
+    10133,
+    10134,
+    10135,
+    10136,
+    10137,
+    10138,
+    10139,
+    10140,
+    10141,
+    10142,
+    10143,
+    10144,
+    10145,
+    10146,
+    10147,
+    10148,
+    10149,
+    10150,
+    10151,
+    10152,
+    10153,
+    10154,
+    10155,
+    10156,
+    10157,
+    10158,
+    10159,
+    10160,
+    10161,
+    10162,
+    10163,
+    10164,
+    10165,
+    10166,
+    10167,
+    10168,
+    10169,
+    10170,
+    10171,
+    10172,
+    10173,
+    10174,
+    10175,
+    10176,
+    10177,
+    10178,
+    10179,
+    10180,
+    10181,
+    10182,
+    10183,
+    10184,
+    10185,
+    10186,
+    10187,
+    10188,
+    10189,
+    10190,
+    10191,
+    10192,
+    10193,
+    10194,
+    10195,
+    10196,
+    10197,
+    10198,
+    10199
+  ],
+  "metrics": {
+    "n_episodes": 200,
+    "lap_success_rate": 1.0,
+    "off_track_rate": 0.0,
+    "stuck_rate": 0.0,
+    "mean_lap_time": 40.7135,
+    "mean_speed": 13.661727809466901,
+    "mean_progress": 1.0
+  },
+  "episodes": [
+    [
+      {
+        "seed": 10000,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 36.35
+      },
+      {
+        "seed": 10001,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 36.75
+      },
+      {
+        "seed": 10002,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 37.65
+      },
+      {
+        "seed": 10003,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 42.35
+      },
+      {
+        "seed": 10004,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 44.2
+      },
+      {
+        "seed": 10005,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 40.25
+      },
+      {
+        "seed": 10006,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 40.85
+      },
+      {
+        "seed": 10007,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 43.95
+      },
+      {
+        "seed": 10008,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 37.4
+      },
+      {
+        "seed": 10009,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 47.7
+      },
+      {
+        "seed": 10010,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 33.45
+      },
+      {
+        "seed": 10011,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 41.6
+      },
+      {
+        "seed": 10012,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 43.150000000000006
+      },
+      {
+        "seed": 10013,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 42.25
+      },
+      {
+        "seed": 10014,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 37.65
+      },
+      {
+        "seed": 10015,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 45.550000000000004
+      },
+      {
+        "seed": 10016,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 37.15
+      },
+      {
+        "seed": 10017,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 43.2
+      },
+      {
+        "seed": 10018,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 37.300000000000004
+      },
+      {
+        "seed": 10019,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 41.050000000000004
+      },
+      {
+        "seed": 10020,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 40.95
+      },
+      {
+        "seed": 10021,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 43.45
+      },
+      {
+        "seed": 10022,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 43.300000000000004
+      },
+      {
+        "seed": 10023,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 32.9
+      },
+      {
+        "seed": 10024,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 45.300000000000004
+      },
+      {
+        "seed": 10025,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 43.800000000000004
+      },
+      {
+        "seed": 10026,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 46.6
+      },
+      {
+        "seed": 10027,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 43.35
+      },
+      {
+        "seed": 10028,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 42.400000000000006
+      },
+      {
+        "seed": 10029,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 35.5
+      },
+      {
+        "seed": 10030,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 38.400000000000006
+      },
+      {
+        "seed": 10031,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 40.45
+      },
+      {
+        "seed": 10032,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 39.2
+      },
+      {
+        "seed": 10033,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 46.0
+      },
+      {
+        "seed": 10034,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 41.2
+      },
+      {
+        "seed": 10035,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 36.5
+      },
+      {
+        "seed": 10036,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 34.75
+      },
+      {
+        "seed": 10037,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 38.15
+      },
+      {
+        "seed": 10038,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 41.5
+      },
+      {
+        "seed": 10039,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 31.900000000000002
+      },
+      {
+        "seed": 10040,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 42.150000000000006
+      },
+      {
+        "seed": 10041,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 42.150000000000006
+      },
+      {
+        "seed": 10042,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 40.900000000000006
+      },
+      {
+        "seed": 10043,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 45.5
+      },
+      {
+        "seed": 10044,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 41.550000000000004
+      },
+      {
+        "seed": 10045,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 38.900000000000006
+      },
+      {
+        "seed": 10046,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 40.1
+      },
+      {
+        "seed": 10047,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 39.45
+      },
+      {
+        "seed": 10048,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 35.85
+      },
+      {
+        "seed": 10049,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 35.15
+      },
+      {
+        "seed": 10050,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 45.050000000000004
+      },
+      {
+        "seed": 10051,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 45.150000000000006
+      },
+      {
+        "seed": 10052,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 36.85
+      },
+      {
+        "seed": 10053,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 36.050000000000004
+      },
+      {
+        "seed": 10054,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 40.800000000000004
+      },
+      {
+        "seed": 10055,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 37.35
+      },
+      {
+        "seed": 10056,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 38.7
+      },
+      {
+        "seed": 10057,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 45.75
+      },
+      {
+        "seed": 10058,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 36.5
+      },
+      {
+        "seed": 10059,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 38.95
+      },
+      {
+        "seed": 10060,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 40.0
+      },
+      {
+        "seed": 10061,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 29.85
+      },
+      {
+        "seed": 10062,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 40.550000000000004
+      },
+      {
+        "seed": 10063,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 38.35
+      },
+      {
+        "seed": 10064,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 38.6
+      },
+      {
+        "seed": 10065,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 36.65
+      },
+      {
+        "seed": 10066,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 47.2
+      },
+      {
+        "seed": 10067,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 42.300000000000004
+      },
+      {
+        "seed": 10068,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 38.75
+      },
+      {
+        "seed": 10069,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 44.550000000000004
+      },
+      {
+        "seed": 10070,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 40.550000000000004
+      },
+      {
+        "seed": 10071,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 43.050000000000004
+      },
+      {
+        "seed": 10072,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 36.85
+      },
+      {
+        "seed": 10073,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 41.650000000000006
+      },
+      {
+        "seed": 10074,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 47.1
+      },
+      {
+        "seed": 10075,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 44.5
+      },
+      {
+        "seed": 10076,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 39.1
+      },
+      {
+        "seed": 10077,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 34.65
+      },
+      {
+        "seed": 10078,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 41.25
+      },
+      {
+        "seed": 10079,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 45.95
+      },
+      {
+        "seed": 10080,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 38.35
+      },
+      {
+        "seed": 10081,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 37.550000000000004
+      },
+      {
+        "seed": 10082,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 45.300000000000004
+      },
+      {
+        "seed": 10083,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 40.050000000000004
+      },
+      {
+        "seed": 10084,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 41.800000000000004
+      },
+      {
+        "seed": 10085,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 48.150000000000006
+      },
+      {
+        "seed": 10086,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 42.300000000000004
+      },
+      {
+        "seed": 10087,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 37.0
+      },
+      {
+        "seed": 10088,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 36.4
+      },
+      {
+        "seed": 10089,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 42.1
+      },
+      {
+        "seed": 10090,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 40.5
+      },
+      {
+        "seed": 10091,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 39.0
+      },
+      {
+        "seed": 10092,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 40.2
+      },
+      {
+        "seed": 10093,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 36.45
+      },
+      {
+        "seed": 10094,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 54.95
+      },
+      {
+        "seed": 10095,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 33.95
+      },
+      {
+        "seed": 10096,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 46.45
+      },
+      {
+        "seed": 10097,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 41.2
+      },
+      {
+        "seed": 10098,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 46.650000000000006
+      },
+      {
+        "seed": 10099,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 42.2
+      },
+      {
+        "seed": 10100,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 40.550000000000004
+      },
+      {
+        "seed": 10101,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 36.45
+      },
+      {
+        "seed": 10102,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 45.550000000000004
+      },
+      {
+        "seed": 10103,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 38.45
+      },
+      {
+        "seed": 10104,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 42.900000000000006
+      },
+      {
+        "seed": 10105,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 45.1
+      },
+      {
+        "seed": 10106,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 44.800000000000004
+      },
+      {
+        "seed": 10107,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 43.900000000000006
+      },
+      {
+        "seed": 10108,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 41.7
+      },
+      {
+        "seed": 10109,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 38.75
+      },
+      {
+        "seed": 10110,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 36.550000000000004
+      },
+      {
+        "seed": 10111,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 36.6
+      },
+      {
+        "seed": 10112,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 35.75
+      },
+      {
+        "seed": 10113,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 47.550000000000004
+      },
+      {
+        "seed": 10114,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 35.7
+      },
+      {
+        "seed": 10115,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 37.550000000000004
+      },
+      {
+        "seed": 10116,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 36.800000000000004
+      },
+      {
+        "seed": 10117,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 42.25
+      },
+      {
+        "seed": 10118,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 41.2
+      },
+      {
+        "seed": 10119,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 35.65
+      },
+      {
+        "seed": 10120,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 32.15
+      },
+      {
+        "seed": 10121,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 43.900000000000006
+      },
+      {
+        "seed": 10122,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 41.150000000000006
+      },
+      {
+        "seed": 10123,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 34.45
+      },
+      {
+        "seed": 10124,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 41.300000000000004
+      },
+      {
+        "seed": 10125,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 37.15
+      },
+      {
+        "seed": 10126,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 36.5
+      },
+      {
+        "seed": 10127,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 46.2
+      },
+      {
+        "seed": 10128,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 35.95
+      },
+      {
+        "seed": 10129,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 41.95
+      },
+      {
+        "seed": 10130,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 49.7
+      },
+      {
+        "seed": 10131,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 42.900000000000006
+      },
+      {
+        "seed": 10132,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 44.5
+      },
+      {
+        "seed": 10133,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 53.85
+      },
+      {
+        "seed": 10134,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 48.300000000000004
+      },
+      {
+        "seed": 10135,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 36.95
+      },
+      {
+        "seed": 10136,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 35.0
+      },
+      {
+        "seed": 10137,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 32.800000000000004
+      },
+      {
+        "seed": 10138,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 33.5
+      },
+      {
+        "seed": 10139,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 41.85
+      },
+      {
+        "seed": 10140,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 42.1
+      },
+      {
+        "seed": 10141,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 42.75
+      },
+      {
+        "seed": 10142,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 42.0
+      },
+      {
+        "seed": 10143,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 40.800000000000004
+      },
+      {
+        "seed": 10144,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 42.0
+      },
+      {
+        "seed": 10145,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 45.400000000000006
+      },
+      {
+        "seed": 10146,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 39.6
+      },
+      {
+        "seed": 10147,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 41.6
+      },
+      {
+        "seed": 10148,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 39.550000000000004
+      },
+      {
+        "seed": 10149,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 39.85
+      },
+      {
+        "seed": 10150,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 40.2
+      },
+      {
+        "seed": 10151,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 44.45
+      },
+      {
+        "seed": 10152,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 48.35
+      },
+      {
+        "seed": 10153,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 40.45
+      },
+      {
+        "seed": 10154,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 34.45
+      },
+      {
+        "seed": 10155,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 35.4
+      },
+      {
+        "seed": 10156,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 32.45
+      },
+      {
+        "seed": 10157,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 42.95
+      },
+      {
+        "seed": 10158,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 46.150000000000006
+      },
+      {
+        "seed": 10159,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 36.800000000000004
+      },
+      {
+        "seed": 10160,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 41.75
+      },
+      {
+        "seed": 10161,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 39.300000000000004
+      },
+      {
+        "seed": 10162,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 35.050000000000004
+      },
+      {
+        "seed": 10163,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 40.45
+      },
+      {
+        "seed": 10164,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 40.7
+      },
+      {
+        "seed": 10165,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 37.45
+      },
+      {
+        "seed": 10166,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 43.800000000000004
+      },
+      {
+        "seed": 10167,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 41.300000000000004
+      },
+      {
+        "seed": 10168,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 50.400000000000006
+      },
+      {
+        "seed": 10169,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 45.25
+      },
+      {
+        "seed": 10170,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 53.050000000000004
+      },
+      {
+        "seed": 10171,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 47.400000000000006
+      },
+      {
+        "seed": 10172,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 46.7
+      },
+      {
+        "seed": 10173,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 44.1
+      },
+      {
+        "seed": 10174,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 39.300000000000004
+      },
+      {
+        "seed": 10175,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 40.550000000000004
+      },
+      {
+        "seed": 10176,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 36.35
+      },
+      {
+        "seed": 10177,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 44.400000000000006
+      },
+      {
+        "seed": 10178,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 41.1
+      },
+      {
+        "seed": 10179,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 40.5
+      },
+      {
+        "seed": 10180,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 35.65
+      },
+      {
+        "seed": 10181,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 37.050000000000004
+      },
+      {
+        "seed": 10182,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 40.75
+      },
+      {
+        "seed": 10183,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 42.800000000000004
+      },
+      {
+        "seed": 10184,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 47.1
+      },
+      {
+        "seed": 10185,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 41.150000000000006
+      },
+      {
+        "seed": 10186,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 39.1
+      },
+      {
+        "seed": 10187,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 34.45
+      },
+      {
+        "seed": 10188,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 42.800000000000004
+      },
+      {
+        "seed": 10189,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 38.15
+      },
+      {
+        "seed": 10190,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 40.45
+      },
+      {
+        "seed": 10191,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 37.85
+      },
+      {
+        "seed": 10192,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 45.800000000000004
+      },
+      {
+        "seed": 10193,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 38.050000000000004
+      },
+      {
+        "seed": 10194,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 39.45
+      },
+      {
+        "seed": 10195,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 42.1
+      },
+      {
+        "seed": 10196,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 44.45
+      },
+      {
+        "seed": 10197,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 39.2
+      },
+      {
+        "seed": 10198,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 38.400000000000006
+      },
+      {
+        "seed": 10199,
+        "outcome": "lap",
+        "progress": 1.0,
+        "lap_time": 37.7
+      }
+    ]
+  ]
+}

@@ -1,0 +1,30 @@
+total_timesteps: 300000
+n_envs: 8
+difficulty: 0.0
+checkpoint_freq: 100000
+eval:
+  freq: 50000
+  tracks: 20
+reward:
+  progress: 10.0
+  time: 0.01
+  jitter: 0.01
+  grass: 0.05
+  idle: 0.03
+  off_road: 5.0
+  stuck: 10.0
+  lap: 5.0
+ppo:
+  learning_rate: 0.0003
+  n_steps: 1024
+  batch_size: 512
+  n_epochs: 10
+  gamma: 0.99
+  gae_lambda: 0.95
+  ent_coef: 0.0
+  policy_kwargs:
+    net_arch:
+    - 64
+    - 64
+name: probe_mvp
+seed: 1

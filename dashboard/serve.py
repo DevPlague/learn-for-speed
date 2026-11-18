@@ -15,6 +15,18 @@ class QuietHandler(http.server.SimpleHTTPRequestHandler):
     def log_message(self, *args):
         """Keeps the terminal to the one line with the link."""
 
+    def end_headers(self):
+        # every build changes the files, the browser must never reuse an old copy
+        self.send_header("Cache-Control", "no-store")
+        super().end_headers()
+
+
+class QuietServer(http.server.ThreadingHTTPServer):
+    def handle_error(self, request, client_address):
+        """The browser drops downloads it no longer needs, that is not an error worth a traceback."""
+        if not isinstance(sys.exc_info()[1], ConnectionError):
+            super().handle_error(request, client_address)
+
 
 def free_port(start=8000):
     """First free port from `start`, so a second dashboard does not clash with the first."""
@@ -32,7 +44,7 @@ def serve(folder="runs/dashboard"):
         raise SystemExit(1)
     port = free_port()
     handler = functools.partial(QuietHandler, directory=str(folder))
-    with http.server.ThreadingHTTPServer(("127.0.0.1", port), handler) as server:
+    with QuietServer(("127.0.0.1", port), handler) as server:
         print(f"Dashboard en http://localhost:{port}/  (Ctrl+C para pararlo)", flush=True)
         try:
             server.serve_forever()
