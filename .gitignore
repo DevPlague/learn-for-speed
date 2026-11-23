@@ -36,3 +36,6 @@ target/
 .claude/settings.local.json
 .claude/
 graphify-out/
+
+# School deliverables (report and slides)
+entrega/
