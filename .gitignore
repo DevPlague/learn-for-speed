@@ -39,3 +39,9 @@ graphify-out/
 
 # School deliverables (report and slides)
 entrega/
+
+# Local working documents, not part of the repo
+docs/Documentaci*.md
+docs/prompt.md
+docs/prompt_docs.md
+/memoria(1).tex
